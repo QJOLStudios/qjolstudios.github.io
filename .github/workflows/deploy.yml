@@ -34,11 +34,11 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build with VitePress
         run: |
-          npx vitepress build docs
+          ./node_modules/.bin/vitepress build docs
           touch docs/.vitepress/dist/.nojekyll
 
       - name: Upload artifact
