@@ -38,7 +38,7 @@ jobs:
 
       - name: Build with VitePress
         run: |
-          npm run docs:build
+          npx vitepress build docs
           touch docs/.vitepress/dist/.nojekyll
 
       - name: Upload artifact
