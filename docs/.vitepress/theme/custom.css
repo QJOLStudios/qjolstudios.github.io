@@ -1,0 +1,130 @@
+/* 顶部导航栏毛玻璃效果 */
+.VPNav {
+  background: transparent !important;
+}
+
+.VPNavBar {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  ) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border-radius: 0 0 16px 16px !important;
+}
+
+/* 深色模式下的毛玻璃效果 */
+.dark .VPNavBar {
+  background: linear-gradient(
+    to bottom,
+    rgba(30, 30, 30, 0.4) 0%,
+    rgba(20, 20, 20, 0.2) 100%
+  ) !important;
+}
+
+/* 导航栏底部渐变边框 */
+.VPNavBar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(128, 128, 128, 0.3) 20%,
+    rgba(128, 128, 128, 0.3) 80%,
+    transparent 100%
+  );
+}
+
+/* 移除原来的边框 */
+.VPNavBar {
+  border-bottom: none !important;
+}
+
+/* GitHub 图标样式 - 带背景方块，位于标题上方 */
+.VPFeature a[href*="github.com"] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 48px !important;
+  height: 48px !important;
+  background: rgba(128, 128, 128, 0.15) !important;
+  border-radius: 12px !important;
+  margin: 0 auto 12px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  order: -1 !important;
+}
+
+.VPFeature a[href*="github.com"]:hover {
+  background: rgba(128, 128, 128, 0.25) !important;
+  transform: translateY(-3px) scale(1.05) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+}
+
+.VPFeature a[href*="github.com"] svg {
+  width: 24px !important;
+  height: 24px !important;
+  color: var(--vp-c-text-1) !important;
+}
+
+/* 功能卡片阴影效果 */
+.VPFeature {
+  background: rgba(128, 128, 128, 0.05) !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  text-align: left !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.VPFeature:hover {
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-6px) !important;
+}
+
+/* 标题文字阴影 */
+.VPFeature .title {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  margin-top: 0 !important;
+}
+
+/* 正文文字阴影 */
+.VPFeature .details {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 按钮阴影效果 */
+.VPButton {
+  box-shadow: 
+    0 4px 14px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.VPButton:hover {
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.25),
+    0 3px 8px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-3px) scale(1.02) !important;
+}
+
+/* Hero 区域文字阴影 */
+.VPHero .name,
+.VPHero .text {
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.VPHero .tagline {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
