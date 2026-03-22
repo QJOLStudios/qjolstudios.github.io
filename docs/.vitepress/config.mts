@@ -4,7 +4,6 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "QJOL Studios",
   description: "QJOL Studios' website",
-  base: '/QJOL-Studios-Website/',
   vite: {
     assetsInclude: ['**/*.apk']
   },
@@ -26,7 +25,7 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/SurnameQ114514/' }
+      { icon: 'github', link: 'https://github.com/QJOLStudios/' }
     ]
   }
 })
