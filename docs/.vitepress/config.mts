@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "QJOL Studios",
   description: "QJOL Studios' website",
+  base: '/',
   vite: {
     assetsInclude: ['**/*.apk']
   },
