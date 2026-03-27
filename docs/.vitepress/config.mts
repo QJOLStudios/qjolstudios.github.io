@@ -13,6 +13,7 @@ export default defineConfig({
     nav: [
       { text: '主页', link: '/' },
       { text: '产品', link: '/products' },
+      { text: '团队', link: '/team' },
       { text: '下载中心', link: '/download' }
     ],
 
@@ -20,6 +21,8 @@ export default defineConfig({
       {
         text: '导航',
         items: [
+          { text: '所有产品', link: '/products' },
+          { text: '团队', link: '/team' },
           { text: '下载中心', link: '/download' }
         ]
       }
