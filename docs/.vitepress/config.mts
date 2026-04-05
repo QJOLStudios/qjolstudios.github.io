@@ -6,7 +6,7 @@ export default defineConfig({
   description: "QJOL Studios' website",
   base: '/',
   vite: {
-    assetsInclude: ['**/*.apk']
+    assetsInclude: ['**/*.apk', '**/*.exe', '**/*.pck', '**/*.idsig']
   },
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config

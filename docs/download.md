@@ -34,16 +34,16 @@
 
 ### 最新版本 v0.0.2-demo
 
-- <a href="/downloads/0.0.2-demo/Windows/婵之云_安装程序_v0.0.2-demo.exe" download>Windows 安装程序</a>
-- <a href="/downloads/0.0.2-demo/婵之云.apk" download>Android APK</a>
+- <a href="/downloads/0.0.2-demo/Windows/ChanZhiYun_v0.0.2-demo_Windows.exe" download>Windows 安装程序</a>
+- <a href="/downloads/0.0.2-demo/ChanZhiYun_v0.0.2-demo.apk" download>Android APK</a>
 
 <details>
 <summary>点击展开历史版本</summary>
 
 ### v0.0.1-demo
 
-- <a href="/downloads/0.0.1-demo/Windows/婵之云_安装程序_v0.0.1-demo.exe" download>Windows 安装程序</a>
-- <a href="/downloads/0.0.1-demo/婵之云.apk" download>Android APK</a>
+- <a href="/downloads/0.0.1-demo/Windows/ChanZhiYun_v0.0.1-demo_Windows.exe" download>Windows 安装程序</a>
+- <a href="/downloads/0.0.1-demo/ChanZhiYun_v0.0.1-demo.apk" download>Android APK</a>
 
 </details>
 
