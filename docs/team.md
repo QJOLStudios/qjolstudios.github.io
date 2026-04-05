@@ -80,6 +80,14 @@
   </div>
 </div>
 
+<div class="team-member">
+  <img src="/images/Rational.jpg" class="avatar" alt="Rational.☁">
+  <div class="info">
+    <div class="name">Rational.☁</div>
+    <div class="role">画师</div>
+  </div>
+</div>
+
 </div>
 
 <style>
