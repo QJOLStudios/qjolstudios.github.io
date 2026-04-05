@@ -115,6 +115,10 @@ import { VPHomeContent } from 'vitepress/theme'
   <div class="info">
     <div class="name">Rational.☁</div>
     <div class="role">画师</div>
+    <a href="https://www.douyin.com/user/MS4wLjABAAAABczU7BzbJ3ArnWRtNYfO4XvJ2fuzC4KTNShxJ09lrwJBjZxyKaf67FEuMqriPuHh?from_tab_name=main" target="_blank" class="social-link">
+      <img src="/images/StreamlineColorTiktokFlat.svg" width="16" height="16" alt="抖音" class="douyin-icon"/>
+      抖音
+    </a>
   </div>
 </div>
 
@@ -219,6 +223,12 @@ import { VPHomeContent } from 'vitepress/theme'
 }
 
 .team-member .bilibili-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.team-member .douyin-icon {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
