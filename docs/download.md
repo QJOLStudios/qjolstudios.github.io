@@ -28,6 +28,27 @@
 
 </details>
 
+## 婵之云
+
+由QJOL Studios开发的二次元古风单机卡牌对战游戏
+
+### 最新版本 v0.0.2-demo
+
+- <a href="/downloads/0.0.2-demo/Windows/婵之云_安装程序_v0.0.2-demo.exe" download>Windows 安装程序</a>
+- <a href="/downloads/0.0.2-demo/婵之云.apk" download>Android APK</a>
+
+<details>
+<summary>点击展开历史版本</summary>
+
+### v0.0.1-demo
+
+- <a href="/downloads/0.0.1-demo/Windows/婵之云_安装程序_v0.0.1-demo.exe" download>Windows 安装程序</a>
+- <a href="/downloads/0.0.1-demo/婵之云.apk" download>Android APK</a>
+
+</details>
+
+---
+
 ## Project: Celestial Mandate
 
 QJOL Studios 开发的 2D 开放世界游戏
