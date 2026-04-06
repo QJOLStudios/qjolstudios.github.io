@@ -14,7 +14,8 @@ export default defineConfig({
       { text: '主页', link: '/' },
       { text: '产品', link: '/products' },
       { text: '团队', link: '/team' },
-      { text: '下载中心', link: '/download' }
+      { text: '下载中心', link: '/download' },
+      { text: '抽卡分析', link: '/gacha-analyzer' }
     ],
 
     sidebar: [
@@ -23,7 +24,8 @@ export default defineConfig({
         items: [
           { text: '所有产品', link: '/products' },
           { text: '团队', link: '/team' },
-          { text: '下载中心', link: '/download' }
+          { text: '下载中心', link: '/download' },
+          { text: '抽卡分析', link: '/gacha-analyzer' }
         ]
       }
     ],
