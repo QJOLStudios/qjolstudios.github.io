@@ -100,22 +100,46 @@
         </div>
       </div>
 
-      <!-- 出货时间线 -->
+      <!-- 出货散点图 -->
       <div class="timeline-section">
-        <h3>📈 出货时间线</h3>
-        <div class="timeline-chart">
-          <div
-            v-for="(pull, index) in urPulls"
-            :key="index"
-            class="timeline-item"
-            :style="{ left: (index / (urPulls.length - 1 || 1) * 100) + '%' }"
-          >
-            <div class="timeline-dot" :title="`第 ${pull.total_pulls} 抽 - ${pull.timestamp}`"></div>
-            <div class="timeline-label">{{ pull.total_pulls }}</div>
+        <h3>📈 UR 出货散点图</h3>
+        <div class="scatter-chart">
+          <!-- Y轴标签 -->
+          <div class="y-axis-label">抽数</div>
+          
+          <!-- 散点图区域 -->
+          <div class="scatter-plot">
+            <div
+              v-for="(pull, index) in urPulls"
+              :key="index"
+              class="scatter-point"
+              :style="getScatterPointStyle(pull, index)"
+              :title="`${formatTime(pull.timestamp)}: ${getIntervalAt(index)} 抽`"
+            >
+              <div class="point-dot"></div>
+              <div class="point-label">{{ getIntervalAt(index) }}</div>
+            </div>
+            
+            <!-- 坐标轴 -->
+            <div class="axis x-axis"></div>
+            <div class="axis y-axis"></div>
+            
+            <!-- X轴刻度 -->
+            <div
+              v-for="(pull, index) in urPulls"
+              :key="'x-'+index"
+              class="x-tick"
+              :style="{ left: getXPosition(pull) + '%' }"
+            >
+              {{ formatTimeShort(pull.timestamp) }}
+            </div>
           </div>
+          
+          <!-- X轴标签 -->
+          <div class="x-axis-label">出货时间</div>
         </div>
         <div class="timeline-legend">
-          <span>🔴 每个点代表一次 UR 出货</span>
+          <span>🔴 每个点代表一次 UR 出货，横轴为出货时间，纵轴为花费抽数</span>
         </div>
       </div>
 
@@ -262,20 +286,90 @@ const urPulls = computed(() => {
   return data.value.records.filter(r => r.rarity_code === 2)
 })
 
+// 计算每次UR出货的间隔抽数
+const urIntervals = computed(() => {
+  if (!urPulls.value.length) return []
+  
+  const intervals = []
+  let lastURTotalPulls = 0
+  
+  for (const pull of urPulls.value) {
+    // 本次UR距离上次UR的间隔 = 当前累计抽数 - 上次UR的累计抽数
+    const interval = pull.total_pulls - lastURTotalPulls
+    intervals.push(interval)
+    lastURTotalPulls = pull.total_pulls
+  }
+  
+  return intervals
+})
+const maxInterval = computed(() => {
+  if (!urIntervals.value.length) return 0
+  return Math.max(...urIntervals.value)
+})
+// 获取第 index 次UR的间隔抽数
+const getIntervalAt = (index) => {
+  if (!urIntervals.value.length || index >= urIntervals.value.length) return 0
+  return urIntervals.value[index]
+}
+
+// 获取时间范围
+const timeRange = computed(() => {
+  if (!urPulls.value.length) return { min: 0, max: 0 }
+  const timestamps = urPulls.value.map(p => new Date(p.timestamp).getTime())
+  return {
+    min: Math.min(...timestamps),
+    max: Math.max(...timestamps)
+  }
+})
+
+// 获取散点位置样式
+const getScatterPointStyle = (pull, index) => {
+  const interval = getIntervalAt(index)
+  const timestamp = new Date(pull.timestamp).getTime()
+  const xPos = timeRange.value.max === timeRange.value.min 
+    ? 50 
+    : ((timestamp - timeRange.value.min) / (timeRange.value.max - timeRange.value.min) * 90 + 5)
+  const yPos = maxInterval.value === 0 
+    ? 50 
+    : (interval / maxInterval.value * 80 + 5)
+  
+  return {
+    left: xPos + '%',
+    bottom: yPos + '%'
+  }
+}
+
+// 获取X轴位置
+const getXPosition = (pull) => {
+  const timestamp = new Date(pull.timestamp).getTime()
+  return timeRange.value.max === timeRange.value.min 
+    ? 50 
+    : ((timestamp - timeRange.value.min) / (timeRange.value.max - timeRange.value.min) * 90 + 5)
+}
+
+// 格式化时间（短格式）
+const formatTimeShort = (timestamp) => {
+  if (!timestamp) return '-'
+  const date = new Date(timestamp)
+  return date.toLocaleDateString('zh-CN', {
+    month: 'numeric',
+    day: 'numeric'
+  })
+}
 const avgURPity = computed(() => {
-  if (!urPulls.value.length) return 'N/A'
-  const totalPity = urPulls.value.reduce((sum, pull) => sum + pull.pity_before, 0)
-  return (totalPity / urPulls.value.length).toFixed(1)
+  if (!urIntervals.value.length) return 'N/A'
+  const totalInterval = urIntervals.value.reduce((sum, interval) => sum + interval, 0)
+  return (totalInterval / urIntervals.value.length).toFixed(1)
 })
 
 const maxPity = computed(() => {
-  if (!urPulls.value.length) return 'N/A'
-  return Math.max(...urPulls.value.map(p => p.pity_before))
+  if (!urIntervals.value.length) return 'N/A'
+  return Math.max(...urIntervals.value)
 })
 
 const minURPity = computed(() => {
-  if (!urPulls.value.length) return 'N/A'
-  return Math.min(...urPulls.value.map(p => p.pity_before))
+  if (!urIntervals.value.length) return 'N/A'
+  return Math.min(...urIntervals.value)
 })
 
 const paginatedRecords = computed(() => {
@@ -502,23 +596,54 @@ const formatTime = (timestamp) => {
 }
 
 /* 时间线 */
-.timeline-chart {
+/* 散点图 */
+.scatter-chart {
   position: relative;
-  height: 80px;
+  height: 300px;
   background: var(--vp-c-bg);
   border-radius: 8px;
   margin-bottom: 12px;
+  padding: 40px 60px 40px 60px;
+  display: flex;
+  align-items: center;
 }
 
-.timeline-item {
+.y-axis-label {
   position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: rotate(-90deg) translateX(50%);
+  transform-origin: center;
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+}
+
+.x-axis-label {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
   transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+}
+
+.scatter-plot {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-left: 2px solid var(--vp-c-text-2);
+  border-bottom: 2px solid var(--vp-c-text-2);
+}
+
+.scatter-point {
+  position: absolute;
+  transform: translate(-50%, 50%);
   text-align: center;
 }
 
-.timeline-dot {
-  width: 16px;
-  height: 16px;
+.point-dot {
+  width: 12px;
+  height: 12px;
   background: #f44;
   border-radius: 50%;
   margin: 0 auto 4px;
@@ -526,13 +651,33 @@ const formatTime = (timestamp) => {
   transition: transform 0.2s;
 }
 
-.timeline-dot:hover {
-  transform: scale(1.5);
+.point-dot:hover {
+  transform: scale(1.8);
 }
 
-.timeline-label {
-  font-size: 12px;
+.point-label {
+  font-size: 11px;
   color: var(--vp-c-text-2);
+  white-space: nowrap;
+}
+
+.axis {
+  position: absolute;
+  background: var(--vp-c-text-2);
+}
+
+.x-axis {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+}
+
+.y-axis {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
 }
 
 .timeline-legend {
@@ -540,7 +685,14 @@ const formatTime = (timestamp) => {
   font-size: 14px;
   color: var(--vp-c-text-2);
 }
-
+.x-tick {
+  position: absolute;
+  bottom: -25px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--vp-c-text-2);
+  white-space: nowrap;
+}
 /* 表格 */
 .table-container {
   overflow-x: auto;
