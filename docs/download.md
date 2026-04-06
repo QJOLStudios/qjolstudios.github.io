@@ -32,13 +32,18 @@
 
 由QJOL Studios开发的二次元古风单机卡牌对战游戏
 
-### 最新版本 v0.0.5-demo
+### 最新版本 v0.0.6-demo
 
-- <a href="/downloads/0.0.5-demo/ChanZhiYun_v0.0.5-demo_Windows.exe" download>Windows 安装程序</a>
-- <a href="/downloads/0.0.5-demo/ChanZhiYun_v0.0.5-demo.apk" download>Android APK</a>
+- <a href="/downloads/0.0.6-demo/Windows/ChanZhiYun_v0.0.6-demo_Windows.exe" download>Windows 安装程序</a>
+- <a href="/downloads/0.0.6-demo/ChanZhiYun_v0.0.6-demo.apk" download>Android APK</a>
 
 <details>
 <summary>点击展开历史版本</summary>
+
+### v0.0.5-demo
+
+- <a href="/downloads/0.0.5-demo/ChanZhiYun_v0.0.5-demo_Windows.exe" download>Windows 安装程序</a>
+- <a href="/downloads/0.0.5-demo/ChanZhiYun_v0.0.5-demo.apk" download>Android APK</a>
 
 ### v0.0.4-demo
 
