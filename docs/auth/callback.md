@@ -113,16 +113,20 @@ layout: false
   </div>
 
   <script type="module">
-    // 动态导入，避免 SSR 问题
-    const { createClient } = await import('@supabase/supabase-js')
+    async function init() {
+      // 动态导入，避免 SSR 问题
+      const { createClient } = await import('@supabase/supabase-js')
+      
+      const SUPABASE_URL = 'https://ornvxqtykdmafokmwwnr.supabase.co'
+      // 使用和游戏相同的 API Key
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybnZ4cXR5a2RtYWZva213d25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NTAzNDAsImV4cCI6MjA5MTUyNjM0MH0.1zFgq_EC6JHmMTzRPDW11JKl7ltBzdjH2EMXvioJPqI'
+      
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+      
+      await handleCallback(supabase)
+    }
     
-    const SUPABASE_URL = 'https://ornvxqtykdmafokmwwnr.supabase.co'
-    // 使用和游戏相同的 API Key
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybnZ4cXR5a2RtYWZva213d25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NTAzNDAsImV4cCI6MjA5MTUyNjM0MH0.1zFgq_EC6JHmMTzRPDW11JKl7ltBzdjH2EMXvioJPqI'
-    
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
-    
-    async function handleCallback() {
+    async function handleCallback(supabase) {
       const loadingState = document.getElementById('loading-state')
       const successState = document.getElementById('success-state')
       const errorState = document.getElementById('error-state')
@@ -214,9 +218,9 @@ layout: false
     
     // 页面加载完成后处理
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', handleCallback)
+      document.addEventListener('DOMContentLoaded', init)
     } else {
-      handleCallback()
+      init()
     }
   </script>
 </body>
