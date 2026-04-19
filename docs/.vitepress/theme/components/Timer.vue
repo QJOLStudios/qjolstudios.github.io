@@ -39,14 +39,13 @@ onUnmounted(() => {
 <style scoped>
 .timer-section {
   text-align: center;
-  padding: 16px 24px;
+  padding: 12px 24px;
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  width: 100vw;
   z-index: 999;
   background: var(--vp-c-bg);
-  width: 100%;
   border-top: 1px solid var(--vp-c-divider);
   backdrop-filter: blur(8px);
 }
