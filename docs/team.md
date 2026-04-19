@@ -84,7 +84,7 @@
   <img src="/images/Rational.jpg" class="avatar" alt="Rational.☁">
   <div class="info">
     <div class="name">Rational.☁</div>
-    <div class="role">画师</div>
+    <div class="role">美术</div>
     <a href="https://www.douyin.com/user/MS4wLjABAAAABczU7BzbJ3ArnWRtNYfO4XvJ2fuzC4KTNShxJ09lrwJBjZxyKaf67FEuMqriPuHh?from_tab_name=main" target="_blank" class="github-link">
       <img src="/images/StreamlineColorTiktokFlat.svg" width="16" height="16" alt="抖音" class="douyin-icon"/>
       抖音
