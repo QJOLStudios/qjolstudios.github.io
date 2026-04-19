@@ -112,13 +112,10 @@ layout: false
     </div>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
-    
+  <script>
+    // 使用全局变量方式加载 Supabase
     const SUPABASE_URL = 'https://ornvxqtykdmafokmwwnr.supabase.co'
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybnZ4cXR5a2RtYWZva213d25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MjI4MjEsImV4cCI6MjA2MDM5ODgyMX0.lH1af9y4qyX8aY3JyOOFj4yC1MhXzD5p6qE8rF9s2tU'
-    
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
     
     async function handleCallback() {
       const loadingState = document.getElementById('loading-state')
@@ -146,7 +143,6 @@ layout: false
         // 获取 access_token 和 refresh_token
         const access_token = params.get('access_token')
         const refresh_token = params.get('refresh_token')
-        const type = params.get('type')
         
         if (!access_token || !refresh_token) {
           loadingState.classList.add('hidden')
@@ -155,14 +151,18 @@ layout: false
           return
         }
         
-        // 设置 session
-        const { data, error: sessionError } = await supabase.auth.setSession({
-          access_token,
-          refresh_token
+        // 使用 fetch API 直接设置 session
+        const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ refresh_token })
         })
         
-        if (sessionError) {
-          throw sessionError
+        if (!response.ok) {
+          throw new Error('验证失败')
         }
         
         // 验证成功
