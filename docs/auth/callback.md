@@ -113,7 +113,8 @@ layout: false
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+    // 动态导入，避免 SSR 问题
+    const { createClient } = await import('@supabase/supabase-js')
     
     const SUPABASE_URL = 'https://ornvxqtykdmafokmwwnr.supabase.co'
     // 使用和游戏相同的 API Key
