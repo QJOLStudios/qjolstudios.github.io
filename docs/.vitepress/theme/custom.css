@@ -90,6 +90,26 @@ html body .VPNav .VPNavBar {
 }
 
 /* ----------------------------------------
+   导航栏右侧内容区域 - 添加登录组件位置
+   ---------------------------------------- */
+html body .VPNavBar .content {
+  display: flex;
+  align-items: center;
+}
+
+html body .VPNavBar .content-body {
+  display: flex;
+  align-items: center;
+}
+
+/* 调整导航栏右侧区域，为登录按钮留出空间 */
+html body .VPNavBar .VPNavBarExtra {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ----------------------------------------
    功能卡片 - 阴影和悬停效果
    ---------------------------------------- */
 .VPFeatures .VPFeature {
@@ -174,4 +194,86 @@ html body .VPNav .VPNavBar {
 
 .VPHero .tagline {
   text-shadow: var(--text-shadow-hero-sub);
+}
+
+/* ----------------------------------------
+   用户登录组件样式
+   ---------------------------------------- */
+.nav-bar-auth {
+  display: flex;
+  align-items: center;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid var(--vp-c-divider);
+}
+
+/* 在移动端的适配 */
+@media (max-width: 768px) {
+  .nav-bar-auth {
+    margin-left: 8px;
+    padding-left: 8px;
+  }
+}
+
+/* ----------------------------------------
+   登录弹窗样式 - 确保居中显示
+   ---------------------------------------- */
+.modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999 !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  margin: 0 !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+}
+
+.modal-content {
+  background: var(--vp-c-bg);
+  padding: 32px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  margin: auto;
+}
+  /* ============================================
+   强制登录按钮靠右
+   ============================================ */
+
+/* 让导航栏内容区域使用 flex 布局 */
+html body .VPNavBar .content-body {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+/* 让导航链接区域占据剩余空间 */
+html body .VPNavBar .VPNavBarMenu {
+  flex: 1 !important;
+}
+
+/* 让登录按钮容器靠右 */
+html body .nav-bar-auth-wrapper {
+  margin-left: auto !important;
+  order: 9999 !important;
+  flex-shrink: 0 !important;
+}
+
+/* 确保 VPNavBarExtra 保持在原位 */
+html body .VPNavBar .VPNavBarExtra {
+  flex-shrink: 0 !important;
+  order: 1 !important;
+}
 }

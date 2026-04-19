@@ -1,0 +1,1 @@
+import{_ as e,o as t,c as r,a2 as o}from"./chunks/framework.9OEo8FlG.js";const u=JSON.parse('{"title":"所有产品","description":"","frontmatter":{},"headers":[],"relativePath":"products.md","filePath":"products.md"}'),i={name:"products.md"};function l(h,a,d,s,n,p){return t(),r("div",null,[...a[0]||(a[0]=[o("",26)])])}const m=e(i,[["render",l]]);export{u as __pageData,m as default};

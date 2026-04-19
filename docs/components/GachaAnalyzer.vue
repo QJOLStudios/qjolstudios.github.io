@@ -13,6 +13,13 @@
         <button @click="parseData" class="btn-primary">🔍 分析数据</button>
         <button @click="clearData" class="btn-secondary">🗑️ 清空</button>
         <button @click="loadExample" class="btn-secondary">📖 加载示例</button>
+        <button @click="loadFromCloud" class="btn-cloud" :disabled="cloudLoading">
+          <span v-if="cloudLoading">⏳ 加载中...</span>
+          <span v-else>☁️ 从云端获取</span>
+        </button>
+      </div>
+      <div v-if="cloudError" class="cloud-error">
+        ⚠️ {{ cloudError }}
       </div>
     </div>
 
@@ -210,6 +217,131 @@ const data = ref(null)
 const error = ref('')
 const currentPage = ref(1)
 const pageSize = 20
+const cloudLoading = ref(false)
+const cloudError = ref('')
+
+let supabase = null
+
+// 初始化 Supabase
+async function initSupabase() {
+  if (typeof window === 'undefined') return null
+  
+  const { createClient } = await import('@supabase/supabase-js')
+  const SUPABASE_URL = 'https://ornvxqtykdmafokmwwnr.supabase.co'
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybnZ4cXR5a2RtYWZva213d25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NTAzNDAsImV4cCI6MjA5MTUyNjM0MH0.1zFgq_EC6JHmMTzRPDW11JKl7ltBzdjH2EMXvioJPqI'
+  
+  supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+  return supabase
+}
+
+// 从云端获取抽卡记录
+async function loadFromCloud() {
+  cloudLoading.value = true
+  cloudError.value = ''
+  error.value = ''
+  
+  try {
+    const client = await initSupabase()
+    if (!client) {
+      cloudError.value = '客户端初始化失败'
+      return
+    }
+    
+    // 检查登录状态
+    const { data: { session }, error: sessionError } = await client.auth.getSession()
+    
+    if (sessionError) throw sessionError
+    
+    if (!session) {
+      cloudError.value = '请先登录后再获取云端数据'
+      return
+    }
+    
+    // 从 Supabase 获取抽卡记录 - 使用 gacha_history 表
+    const { data: records, error: fetchError } = await client
+      .from('gacha_history')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: true })
+    
+    if (fetchError) throw fetchError
+    
+    if (!records || records.length === 0) {
+      cloudError.value = '暂无云端抽卡记录，请先在游戏中抽卡并同步数据'
+      return
+    }
+    
+    // 转换为分析器需要的格式
+    const cloudData = transformCloudData(records)
+    
+    // 设置数据并分析
+    jsonInput.value = JSON.stringify(cloudData, null, 2)
+    data.value = cloudData
+    currentPage.value = 1
+    
+  } catch (err) {
+    console.error('获取云端数据失败:', err)
+    cloudError.value = '获取云端数据失败: ' + (err.message || '未知错误')
+  } finally {
+    cloudLoading.value = false
+  }
+}
+
+// 转换云端数据为分析器格式
+function transformCloudData(records) {
+  // 按时间排序
+  const sortedRecords = [...records].sort((a, b) => 
+    new Date(a.created_at) - new Date(b.created_at)
+  )
+  
+  // 计算统计数据
+  let totalPulls = 0
+  let urCount = 0
+  let ssrCount = 0
+  let srCount = 0
+  let currentPity = 0
+  
+  const transformedRecords = sortedRecords.map((record, index) => {
+    totalPulls++
+    currentPity++
+    
+    // 根据稀有度统计
+    const rarityCode = record.rarity === 'UR' ? 2 : (record.rarity === 'SSR' ? 1 : 0)
+    const rarityName = record.rarity === 'UR' ? '传说' : (record.rarity === 'SSR' ? '稀有' : '普通')
+    
+    if (record.rarity === 'UR') {
+      urCount++
+      currentPity = 0
+    } else if (record.rarity === 'SSR') {
+      ssrCount++
+    } else {
+      srCount++
+    }
+    
+    return {
+      timestamp: record.created_at,
+      rarity: rarityName,
+      rarity_code: rarityCode,
+      pity_before: record.pity_before,
+      pity_after: record.pity_after,
+      total_pulls: totalPulls
+    }
+  })
+  
+  return {
+    export_time: new Date().toISOString(),
+    game_version: 'cloud',
+    summary: {
+      total_pulls: totalPulls,
+      ur_count: urCount,
+      ssr_count: ssrCount,
+      sr_count: srCount,
+      current_pity: currentPity,
+      ur_rate: totalPulls > 0 ? ((urCount / totalPulls) * 100).toFixed(2) : 0
+    },
+    records: transformedRecords
+  }
+}
 
 // 示例数据
 const exampleData = {
@@ -257,6 +389,7 @@ const clearData = () => {
   jsonInput.value = ''
   data.value = null
   error.value = ''
+  cloudError.value = ''
   currentPage.value = 1
 }
 
@@ -444,9 +577,10 @@ const formatTime = (timestamp) => {
   display: flex;
   gap: 12px;
   margin-top: 16px;
+  flex-wrap: wrap;
 }
 
-.btn-primary, .btn-secondary, .btn-page {
+.btn-primary, .btn-secondary, .btn-page, .btn-cloud {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;
@@ -471,6 +605,30 @@ const formatTime = (timestamp) => {
 
 .btn-secondary:hover {
   background: var(--vp-c-gray-light-4);
+}
+
+.btn-cloud {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-cloud:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-cloud:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cloud-error {
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
 /* 错误提示 */
@@ -778,6 +936,14 @@ const formatTime = (timestamp) => {
   
   .pity-stats {
     grid-template-columns: 1fr;
+  }
+  
+  .button-group {
+    flex-direction: column;
+  }
+  
+  .btn-primary, .btn-secondary, .btn-cloud {
+    width: 100%;
   }
 }
 </style>
