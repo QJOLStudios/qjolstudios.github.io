@@ -126,8 +126,6 @@ import { VPHomeContent } from 'vitepress/theme'
 
 </div>
 
-<Timer />
-
 <style>
 .home-team-section {
   padding: 64px 24px;

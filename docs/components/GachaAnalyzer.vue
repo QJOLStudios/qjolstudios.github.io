@@ -11,12 +11,12 @@
       ></textarea>
       <div class="button-group">
         <button @click="parseData" class="btn-primary">🔍 分析数据</button>
-        <button @click="clearData" class="btn-secondary">🗑️ 清空</button>
-        <button @click="loadExample" class="btn-secondary">📖 加载示例</button>
         <button @click="loadFromCloud" class="btn-cloud" :disabled="cloudLoading">
           <span v-if="cloudLoading">⏳ 加载中...</span>
           <span v-else>☁️ 从云端获取</span>
         </button>
+        <button @click="clearData" class="btn-secondary">🗑️ 清空</button>
+        <button @click="loadExample" class="btn-secondary">📖 加载示例</button>
       </div>
       <div v-if="cloudError" class="cloud-error">
         ⚠️ {{ cloudError }}

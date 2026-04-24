@@ -152,6 +152,26 @@
               <template v-if="settingsType === 'account'">
                 <h4 class="section-title">账号信息</h4>
                 <div class="settings-section">
+                  <!-- 头像上传 -->
+                  <div class="avatar-section">
+                    <div class="avatar-preview">
+                      <img v-if="avatarUrl" :src="avatarUrl" alt="头像" class="avatar-img" />
+                      <div v-else class="avatar-placeholder">{{ user?.email?.charAt(0).toUpperCase() || 'U' }}</div>
+                      <div class="avatar-overlay" @click="triggerFileUpload">
+                        <span>更换头像</span>
+                      </div>
+                    </div>
+                    <input 
+                      ref="fileInput" 
+                      type="file" 
+                      accept="image/png,image/jpeg,image/gif,image/webp" 
+                      style="display: none"
+                      @change="handleAvatarUpload"
+                    />
+                    <div v-if="avatarUploadStatus" class="avatar-status">{{ avatarUploadStatus }}</div>
+                  </div>
+                  
+
                   <div class="form-group">
                     <label class="form-label">当前用户名</label>
                     <input 
@@ -301,6 +321,13 @@ const settingsMessage = ref('')
 // 修改用户名
 const newUsername = ref('')
 
+// 头像上传相关
+const fileInput = ref(null)
+const avatarUrl = ref('')
+const avatarUploadStatus = ref('')
+
+
+
 // 修改密码
 const currentPassword = ref('')
 const newPassword = ref('')
@@ -359,6 +386,11 @@ onMounted(async () => {
   
   // 监听显示登录弹窗事件
   window.addEventListener('show-login-modal', handleShowLoginModal)
+  
+  // 加载用户头像
+  if (user.value) {
+    await loadAvatar()
+  }
 })
 
 onUnmounted(() => {
@@ -692,6 +724,110 @@ async function handleRegister() {
     message.value = '注册成功！请检查邮箱完成验证~'
     email.value = ''
     password.value = ''
+  }
+}
+
+// ========================================
+// 头像上传相关方法
+// ========================================
+
+// 触发文件选择
+function triggerFileUpload() {
+  if (fileInput.value) {
+    fileInput.value.click()
+  }
+}
+
+// 处理头像上传（选择文件后显示裁剪弹窗）
+function handleAvatarUpload(event) {
+  const file = event.target.files[0]
+  if (!file) return
+  
+  // 验证文件类型
+  const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    avatarUploadStatus.value = '只支持 PNG、JPG、GIF、WEBP 格式的图片'
+    return
+  }
+  
+  // 验证文件大小（5MB）
+  if (file.size > 5 * 1024 * 1024) {
+    avatarUploadStatus.value = '图片大小不能超过 5MB'
+    return
+  }
+  
+  // 直接上传头像
+  avatarUploadStatus.value = '上传中...'
+  
+  try {
+    // 将图片转换为 base64
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      const imageData = e.target.result
+      
+      // 获取当前 session
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        avatarUploadStatus.value = '请先登录'
+        return
+      }
+      
+      // 调用 Edge Function
+      const response = await fetch('https://ornvxqtykdmafokmwwnr.supabase.co/functions/v1/update-avatar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybnZ4cXR5a2RtYWZva213d25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NTAzNDAsImV4cCI6MjA5MTUyNjM0MH0.1zFgq_EC6JHmMTzRPDW11JKl7ltBzdjH2EMXvioJPqI'
+        },
+        body: JSON.stringify({
+          image_data: imageData,
+          file_name: file.name
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (!response.ok || result.error) {
+        throw new Error(result.error || '上传失败')
+      }
+      
+      // 更新头像 URL
+      avatarUrl.value = result.avatar_url
+      avatarUploadStatus.value = '头像上传成功！'
+      
+      // 3秒后清除状态
+      setTimeout(() => {
+        avatarUploadStatus.value = ''
+      }, 3000)
+    }
+    
+    reader.readAsDataURL(file)
+  } catch (err) {
+    console.error('头像上传错误:', err)
+    avatarUploadStatus.value = err.message || '上传失败'
+  }
+  
+  // 清空文件输入，允许重复选择同一文件
+  event.target.value = ''
+}
+
+// 加载用户头像
+async function loadAvatar() {
+  if (!supabase || !user.value) return
+  
+  try {
+    const { data } = await supabase
+      .from('users')
+      .select('avatar_url')
+      .eq('id', user.value.id)
+      .single()
+    
+    if (data?.avatar_url) {
+      avatarUrl.value = data.avatar_url
+    }
+  } catch (err) {
+    console.log('加载头像失败:', err)
   }
 }
 
@@ -1098,6 +1234,77 @@ async function logout() {
   font-weight: 500;
   color: var(--vp-c-text-2);
   margin-bottom: 8px;
+}
+
+/* 头像上传样式 */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.avatar-preview {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  border: 3px solid var(--vp-c-divider);
+  transition: border-color 0.2s;
+}
+
+.avatar-preview:hover {
+  border-color: #667eea;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.avatar-preview:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-overlay span {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.avatar-status {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--vp-c-text-2);
 }
 
 /* 信息展示区域 */

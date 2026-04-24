@@ -276,4 +276,15 @@ html body .VPNavBar .VPNavBarExtra {
   flex-shrink: 0 !important;
   order: 1 !important;
 }
+
+/* ----------------------------------------
+   底部计时器 - 页面最底部居中
+   ---------------------------------------- */
+.timer-section {
+  text-align: center !important;
+  padding: 24px !important;
+  background: var(--vp-c-bg) !important;
+  border-top: 1px solid var(--vp-c-divider) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }

@@ -18,7 +18,8 @@
       <div class="profile-card main-card">
         <div class="avatar-section">
           <div class="user-avatar-large">
-            {{ user.email?.charAt(0).toUpperCase() || 'U' }}
+            <img v-if="avatarUrl" :src="avatarUrl" alt="头像" class="avatar-img" />
+            <span v-else>{{ user.email?.charAt(0).toUpperCase() || 'U' }}</span>
           </div>
         </div>
         <div class="info-section">
@@ -115,6 +116,7 @@ const user = ref(null)
 const userData = ref(null)
 const loading = ref(true)
 const error = ref('')
+const avatarUrl = ref('')
 
 let supabase = null
 
@@ -155,10 +157,10 @@ async function loadUserData() {
         ssr_count: 0
       }
       
-      // 1. 从 users 表获取 UID 和用户名
+      // 1. 从 users 表获取 UID、用户名和头像
       const { data: userRecord, error: userError } = await supabase
         .from('users')
-        .select('uid, username')
+        .select('uid, username, avatar_url')
         .eq('id', session.user.id)
         .single()
 
@@ -169,6 +171,9 @@ async function loadUserData() {
       if (userRecord) {
         combinedData.uid = userRecord.uid
         combinedData.username = userRecord.username || session.user.email.split('@')[0]
+        if (userRecord.avatar_url) {
+          avatarUrl.value = userRecord.avatar_url
+        }
       }
       // 2. 从 user_data 表获取游戏时长
       const { data: gameData, error: gameError } = await supabase
@@ -347,6 +352,13 @@ onMounted(async () => {
   justify-content: center;
   font-size: 32px;
   font-weight: bold;
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .user-status-badge {
