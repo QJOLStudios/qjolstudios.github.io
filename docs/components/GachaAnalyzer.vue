@@ -111,39 +111,7 @@
       <div class="timeline-section">
         <h3>📈 UR 出货散点图</h3>
         <div class="scatter-chart">
-          <!-- Y轴标签 -->
-          <div class="y-axis-label">抽数</div>
-          
-          <!-- 散点图区域 -->
-          <div class="scatter-plot">
-            <div
-              v-for="(pull, index) in urPulls"
-              :key="index"
-              class="scatter-point"
-              :style="getScatterPointStyle(pull, index)"
-              :title="`${formatTime(pull.timestamp)}: ${getIntervalAt(index)} 抽`"
-            >
-              <div class="point-dot"></div>
-              <div class="point-label">{{ getIntervalAt(index) }}</div>
-            </div>
-            
-            <!-- 坐标轴 -->
-            <div class="axis x-axis"></div>
-            <div class="axis y-axis"></div>
-            
-            <!-- X轴刻度 -->
-            <div
-              v-for="(pull, index) in urPulls"
-              :key="'x-'+index"
-              class="x-tick"
-              :style="{ left: getXPosition(pull) + '%' }"
-            >
-              {{ formatTimeShort(pull.timestamp) }}
-            </div>
-          </div>
-          
-          <!-- X轴标签 -->
-          <div class="x-axis-label">出货时间</div>
+          <div ref="chartRef" class="echarts-container"></div>
         </div>
         <div class="timeline-legend">
           <span>🔴 每个点代表一次 UR 出货，横轴为出货时间，纵轴为花费抽数</span>
@@ -210,7 +178,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import * as echarts from 'echarts'
 
 const jsonInput = ref('')
 const data = ref(null)
@@ -219,6 +188,10 @@ const currentPage = ref(1)
 const pageSize = 20
 const cloudLoading = ref(false)
 const cloudError = ref('')
+
+// ECharts 相关
+const chartRef = ref(null)
+let chartInstance = null
 
 let supabase = null
 
@@ -416,7 +389,10 @@ const actualSRRate = computed(() => {
 
 const urPulls = computed(() => {
   if (!data.value) return []
-  return data.value.records.filter(r => r.rarity_code === 2)
+  // 过滤出 UR 记录并按时间戳排序
+  return data.value.records
+    .filter(r => r.rarity_code === 2)
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
 })
 
 // 计算每次UR出货的间隔抽数
@@ -439,56 +415,285 @@ const maxInterval = computed(() => {
   if (!urIntervals.value.length) return 0
   return Math.max(...urIntervals.value)
 })
+
 // 获取第 index 次UR的间隔抽数
 const getIntervalAt = (index) => {
   if (!urIntervals.value.length || index >= urIntervals.value.length) return 0
   return urIntervals.value[index]
 }
 
-// 获取时间范围
-const timeRange = computed(() => {
-  if (!urPulls.value.length) return { min: 0, max: 0 }
-  const timestamps = urPulls.value.map(p => new Date(p.timestamp).getTime())
+// 准备 ECharts 数据
+const chartData = computed(() => {
+  if (!urPulls.value.length) return []
+  
+  // 按日期分组，同一天内的记录添加偏移量
+  const dayGroups = new Map()
+  
+  urPulls.value.forEach((pull, index) => {
+    const date = new Date(pull.timestamp)
+    const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+    
+    if (!dayGroups.has(dateKey)) {
+      dayGroups.set(dateKey, [])
+    }
+    dayGroups.get(dateKey).push({ pull, index })
+  })
+  
+  // 处理每一天的记录，同一天内的记录添加水平偏移
+  return urPulls.value.map((pull, index) => {
+    const date = new Date(pull.timestamp)
+    const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+    const dayRecords = dayGroups.get(dateKey)
+    
+    let timestamp = date.getTime()
+    
+    // 如果同一天有多个记录，添加偏移量（左右分散）
+    if (dayRecords.length > 1) {
+      const recordIndex = dayRecords.findIndex(r => r.index === index)
+      const offset = (recordIndex - (dayRecords.length - 1) / 2) * 6 * 60 * 60 * 1000 // 6小时偏移
+      timestamp += offset
+    }
+    
+    const interval = getIntervalAt(index)
+    return {
+      name: `第 ${index + 1} 次出货`,
+      value: [timestamp, interval],
+      pullData: pull,
+      originalTime: date.getTime()
+    }
+  })
+})
+
+// 获取主题颜色
+const getThemeColor = (cssVar) => {
+  if (typeof window === 'undefined') return '#333'
+  return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim() || '#333'
+}
+
+// ECharts 配置
+const getChartOption = () => {
+  if (!chartData.value.length) return {}
+  
+  // 使用原始时间计算范围，而不是偏移后的时间
+  const originalTimestamps = chartData.value.map(item => item.originalTime)
+  const minTime = Math.min(...originalTimestamps)
+  const maxTime = Math.max(...originalTimestamps)
+  const timeRange = maxTime - minTime || 1
+  
+  // 动态获取主题颜色
+  const textColor = getThemeColor('--vp-c-text-1') || (document.documentElement.classList.contains('dark') ? '#ffffff' : '#213547')
+  const textColor2 = getThemeColor('--vp-c-text-2') || (document.documentElement.classList.contains('dark') ? '#aaaaaa' : '#476582')
+  const dividerColor = getThemeColor('--vp-c-divider') || (document.documentElement.classList.contains('dark') ? '#2e2e2e' : '#e2e2e3')
+  const bgColor = getThemeColor('--vp-c-bg') || (document.documentElement.classList.contains('dark') ? '#1b1b1f' : '#ffffff')
+  
   return {
-    min: Math.min(...timestamps),
-    max: Math.max(...timestamps)
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: bgColor,
+      borderColor: dividerColor,
+      textStyle: {
+        color: textColor
+      },
+      formatter: (params) => {
+        const date = new Date(params.value[0])
+        const timeStr = date.toLocaleString('zh-CN', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+        return `
+          <div style="font-weight: bold; margin-bottom: 4px;">${params.name}</div>
+          <div>出货时间: ${timeStr}</div>
+          <div>花费抽数: ${params.value[1]} 抽</div>
+        `
+      }
+    },
+    grid: {
+      left: '60px',
+      right: '40px',
+      top: '40px',
+      bottom: '60px',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'time',
+      name: '出货时间',
+      nameLocation: 'middle',
+      nameGap: 35,
+      nameTextStyle: {
+        color: textColor
+      },
+      min: minTime - timeRange * 0.05,
+      max: maxTime + timeRange * 0.05,
+      axisLine: {
+        lineStyle: {
+          color: textColor2
+        }
+      },
+      axisLabel: {
+        color: textColor,
+        formatter: (value) => {
+          const date = new Date(value)
+          return date.toLocaleDateString('zh-CN', {
+            month: 'numeric',
+            day: 'numeric'
+          })
+        }
+      },
+      splitLine: {
+        show: true,
+        lineStyle: {
+          color: dividerColor,
+          type: 'dashed'
+        }
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: '抽数',
+      nameLocation: 'middle',
+      nameGap: 40,
+      nameTextStyle: {
+        color: textColor
+      },
+      min: 0,
+      axisLine: {
+        lineStyle: {
+          color: textColor2
+        }
+      },
+      axisLabel: {
+        color: textColor,
+        formatter: '{value}'
+      },
+      splitLine: {
+        show: true,
+        lineStyle: {
+          color: dividerColor,
+          type: 'dashed'
+        }
+      }
+    },
+    series: [
+      {
+        type: 'scatter',
+        symbolSize: 14,
+        itemStyle: {
+          color: '#f44',
+          shadowBlur: 10,
+          shadowColor: 'rgba(244, 68, 68, 0.5)'
+        },
+        emphasis: {
+          itemStyle: {
+            color: '#f66',
+            shadowBlur: 20,
+            shadowColor: 'rgba(244, 68, 68, 0.8)'
+          },
+          scale: 1.5
+        },
+        data: chartData.value
+      }
+    ]
+  }
+}
+
+// 初始化图表
+const initChart = () => {
+  if (!chartRef.value) return
+  
+  chartInstance = echarts.init(chartRef.value)
+  chartInstance.setOption(getChartOption())
+  
+  // 响应式调整
+  window.addEventListener('resize', handleResize)
+}
+
+// 更新图表
+const updateChart = () => {
+  if (chartInstance) {
+    chartInstance.setOption(getChartOption(), true)
+  }
+}
+
+// 销毁图表
+const disposeChart = () => {
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = null
+    window.removeEventListener('resize', handleResize)
+  }
+}
+
+// 处理窗口大小变化
+const handleResize = () => {
+  if (chartInstance) {
+    chartInstance.resize()
+  }
+}
+
+// 监听主题变化
+const observeThemeChange = () => {
+  if (typeof window === 'undefined' || !chartInstance) return
+  
+  // 监听 html 元素的 class 变化（VitePress 主题切换方式）
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+        // 主题变化时更新图表
+        updateChart()
+      }
+    })
+  })
+  
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+  })
+  
+  return observer
+}
+
+let themeObserver = null
+
+// 生命周期钩子
+onMounted(() => {
+  // 使用 nextTick 确保 DOM 已渲染
+  nextTick(() => {
+    if (data.value && urPulls.value.length > 0) {
+      initChart()
+      themeObserver = observeThemeChange()
+    }
+  })
+})
+
+onUnmounted(() => {
+  disposeChart()
+  if (themeObserver) {
+    themeObserver.disconnect()
   }
 })
 
-// 获取散点位置样式
-const getScatterPointStyle = (pull, index) => {
-  const interval = getIntervalAt(index)
-  const timestamp = new Date(pull.timestamp).getTime()
-  const xPos = timeRange.value.max === timeRange.value.min 
-    ? 50 
-    : ((timestamp - timeRange.value.min) / (timeRange.value.max - timeRange.value.min) * 90 + 5)
-  const yPos = maxInterval.value === 0 
-    ? 50 
-    : (interval / maxInterval.value * 80 + 5)
-  
-  return {
-    left: xPos + '%',
-    bottom: yPos + '%'
+// 监听数据变化
+watch([() => data.value, urPulls], () => {
+  if (data.value && urPulls.value.length > 0) {
+    nextTick(() => {
+      if (!chartInstance) {
+        initChart()
+        themeObserver = observeThemeChange()
+      } else {
+        updateChart()
+      }
+    })
+  } else {
+    disposeChart()
+    if (themeObserver) {
+      themeObserver.disconnect()
+      themeObserver = null
+    }
   }
-}
+}, { deep: true })
 
-// 获取X轴位置
-const getXPosition = (pull) => {
-  const timestamp = new Date(pull.timestamp).getTime()
-  return timeRange.value.max === timeRange.value.min 
-    ? 50 
-    : ((timestamp - timeRange.value.min) / (timeRange.value.max - timeRange.value.min) * 90 + 5)
-}
-
-// 格式化时间（短格式）
-const formatTimeShort = (timestamp) => {
-  if (!timestamp) return '-'
-  const date = new Date(timestamp)
-  return date.toLocaleDateString('zh-CN', {
-    month: 'numeric',
-    day: 'numeric'
-  })
-}
 const avgURPity = computed(() => {
   if (!urIntervals.value.length) return 'N/A'
   const totalInterval = urIntervals.value.reduce((sum, interval) => sum + interval, 0)
@@ -757,99 +962,22 @@ const formatTime = (timestamp) => {
 /* 散点图 */
 .scatter-chart {
   position: relative;
-  height: 300px;
+  height: 400px;
   background: var(--vp-c-bg);
   border-radius: 8px;
   margin-bottom: 12px;
-  padding: 40px 60px 40px 60px;
-  display: flex;
-  align-items: center;
+  padding: 20px;
 }
 
-.y-axis-label {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: rotate(-90deg) translateX(50%);
-  transform-origin: center;
-  font-size: 12px;
-  color: var(--vp-c-text-2);
-}
-
-.x-axis-label {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  color: var(--vp-c-text-2);
-}
-
-.scatter-plot {
-  position: relative;
+.echarts-container {
   width: 100%;
   height: 100%;
-  border-left: 2px solid var(--vp-c-text-2);
-  border-bottom: 2px solid var(--vp-c-text-2);
-}
-
-.scatter-point {
-  position: absolute;
-  transform: translate(-50%, 50%);
-  text-align: center;
-}
-
-.point-dot {
-  width: 12px;
-  height: 12px;
-  background: #f44;
-  border-radius: 50%;
-  margin: 0 auto 4px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.point-dot:hover {
-  transform: scale(1.8);
-}
-
-.point-label {
-  font-size: 11px;
-  color: var(--vp-c-text-2);
-  white-space: nowrap;
-}
-
-.axis {
-  position: absolute;
-  background: var(--vp-c-text-2);
-}
-
-.x-axis {
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-}
-
-.y-axis {
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
 }
 
 .timeline-legend {
   text-align: center;
   font-size: 14px;
   color: var(--vp-c-text-2);
-}
-.x-tick {
-  position: absolute;
-  bottom: -25px;
-  transform: translateX(-50%);
-  font-size: 10px;
-  color: var(--vp-c-text-2);
-  white-space: nowrap;
 }
 /* 表格 */
 .table-container {

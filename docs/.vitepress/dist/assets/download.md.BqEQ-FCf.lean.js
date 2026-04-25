@@ -1,0 +1,1 @@
+import{_ as o,o as d,c as e,a6 as l}from"./chunks/framework.CYFImpZP.js";const w=JSON.parse('{"title":"下载中心","description":"","frontmatter":{},"headers":[],"relativePath":"download.md","filePath":"download.md"}'),n={name:"download.md"};function i(r,a,s,h,t,m){return d(),e("div",null,[...a[0]||(a[0]=[l("",17)])])}const v=o(n,[["render",i]]);export{w as __pageData,v as default};

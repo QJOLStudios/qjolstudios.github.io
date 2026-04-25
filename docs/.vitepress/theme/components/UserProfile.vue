@@ -38,6 +38,10 @@
               <span class="meta-label">最后登录:</span>
               <span class="meta-value">{{ formatDate(user.last_sign_in_at) }}</span>
             </span>
+            <span class="meta-item" v-if="userData?.last_logout">
+              <span class="meta-label">最后下线:</span>
+              <span class="meta-value">{{ formatDate(userData.last_logout) }}</span>
+            </span>
           </div>
         </div>
       </div>
@@ -157,10 +161,10 @@ async function loadUserData() {
         ssr_count: 0
       }
       
-      // 1. 从 users 表获取 UID、用户名和头像
+      // 1. 从 users 表获取 UID、用户名、头像和最后下线时间
       const { data: userRecord, error: userError } = await supabase
         .from('users')
-        .select('uid, username, avatar_url')
+        .select('uid, username, avatar_url, last_logout')
         .eq('id', session.user.id)
         .single()
 
@@ -171,14 +175,15 @@ async function loadUserData() {
       if (userRecord) {
         combinedData.uid = userRecord.uid
         combinedData.username = userRecord.username || session.user.email.split('@')[0]
+        combinedData.last_logout = userRecord.last_logout
         if (userRecord.avatar_url) {
           avatarUrl.value = userRecord.avatar_url
         }
       }
-      // 2. 从 user_data 表获取游戏时长
+      // 2. 从 user_data 表获取游戏时长（从 progress 字段中读取）
       const { data: gameData, error: gameError } = await supabase
         .from('user_data')
-        .select('play_time_seconds')
+        .select('progress')
         .eq('user_id', session.user.id)
         .single()
       
@@ -186,8 +191,8 @@ async function loadUserData() {
         console.warn('获取游戏数据失败:', gameError)
       }
       
-      if (gameData) {
-        combinedData.play_time_seconds = gameData.play_time_seconds || 0
+      if (gameData && gameData.progress) {
+        combinedData.play_time_seconds = gameData.progress.total_play_time || 0
       }
       
       // 3. 从 gacha_history 表统计抽卡数据
@@ -220,28 +225,42 @@ async function loadUserData() {
   }
 }
 
-// 格式化日期
+// 格式化日期（统一转换为北京时间显示）
 function formatDate(dateString) {
   if (!dateString) return '未知'
-  const date = new Date(dateString)
+  
+  // 统一当作 UTC 时间解析，然后转换为北京时间
+  // 如果字符串以 Z 结尾或没有时区信息，都当作 UTC 处理
+  let utcString = dateString
+  if (!dateString.endsWith('Z') && !dateString.includes('+')) {
+    // 没有时区信息，假设是 UTC 时间
+    utcString = dateString + 'Z'
+  }
+  
+  const date = new Date(utcString)
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    timeZone: 'Asia/Shanghai'
   })
 }
 
-// 格式化游戏时长
+// 格式化游戏时长（智能显示：0值不显示）
 function formatPlayTime(seconds) {
-  if (!seconds) return '0小时'
+  if (!seconds) return '0秒'
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
-  if (hours > 0) {
-    return `${hours}小时${minutes}分`
-  }
-  return `${minutes}分钟`
+  const secs = seconds % 60
+  
+  let result = ''
+  if (hours > 0) result += `${hours}小时`
+  if (minutes > 0) result += `${minutes}分`
+  if (secs > 0 || result === '') result += `${secs}秒`
+  
+  return result
 }
 
 // 触发登录
