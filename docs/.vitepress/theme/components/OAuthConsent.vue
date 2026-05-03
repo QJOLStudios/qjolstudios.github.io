@@ -134,12 +134,26 @@ onMounted(async () => {
     }
     
     // 获取当前会话
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError) {
+      console.error('获取会话失败:', sessionError)
+      error.value = '获取登录状态失败'
+      loading.value = false
+      return
+    }
     
     if (!session) {
       // 未登录，重定向到登录页
       const currentUrl = encodeURIComponent(window.location.href)
       window.location.href = `/user?redirect=${currentUrl}`
+      return
+    }
+    
+    // 检查用户数据是否完整
+    if (!session.user || !session.user.id) {
+      error.value = '用户信息不完整，请重新登录'
+      loading.value = false
       return
     }
     
@@ -159,7 +173,7 @@ async function approveAccess() {
     const authCode = generateRandomString(32)
     
     // 存储授权码信息
-    const { error: insertError } = await supabase.from('oauth_codes').insert({
+    const { error: insertError, data } = await supabase.from('oauth_codes').insert({
       code: authCode,
       user_id: currentUser.value.id,
       client_id: clientId,
@@ -170,7 +184,8 @@ async function approveAccess() {
     })
     
     if (insertError) {
-      error.value = '授权失败，请重试'
+      console.error('插入授权码失败:', insertError)
+      error.value = `授权失败: ${insertError.message}`
       return
     }
     
@@ -183,7 +198,7 @@ async function approveAccess() {
     
   } catch (err) {
     console.error('授权错误:', err)
-    error.value = '授权过程中发生错误'
+    error.value = `授权过程中发生错误: ${err.message}`
   }
 }
 
@@ -214,18 +229,16 @@ function generateRandomString(length) {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: var(--vp-c-bg);
-  transition: background 0.3s ease;
+  background: #0f172a;
 }
 
 .consent-container {
-  background: var(--vp-c-bg-soft);
-  border-radius: 20px;
+  background: #1e293b;
+  border-radius: 12px;
   box-shadow: 0 25px 80px rgba(0,0,0,0.3);
   max-width: 480px;
   width: 100%;
   overflow: hidden;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .header {
@@ -239,7 +252,7 @@ function generateRandomString(length) {
   width: 80px;
   height: 80px;
   background: white;
-  border-radius: 20px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -268,10 +281,9 @@ function generateRandomString(length) {
   align-items: center;
   gap: 15px;
   padding: 20px;
-  background: var(--vp-c-bg);
+  background: #0f172a;
   border-radius: 12px;
   margin-bottom: 25px;
-  transition: background 0.3s ease;
 }
 
 .user-avatar {
@@ -289,15 +301,13 @@ function generateRandomString(length) {
 
 .user-details h3 {
   font-size: 16px;
-  color: var(--vp-c-text-1);
+  color: #f1f5f9;
   margin-bottom: 4px;
-  transition: color 0.3s ease;
 }
 
 .user-details p {
   font-size: 13px;
-  color: var(--vp-c-text-2);
-  transition: color 0.3s ease;
+  color: #94a3b8;
 }
 
 .permissions {
@@ -306,11 +316,10 @@ function generateRandomString(length) {
 
 .permissions h3 {
   font-size: 14px;
-  color: var(--vp-c-text-2);
+  color: #94a3b8;
   margin-bottom: 15px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  transition: color 0.3s ease;
 }
 
 .permission-item {
@@ -318,22 +327,22 @@ function generateRandomString(length) {
   align-items: center;
   gap: 15px;
   padding: 15px;
-  border: 1px solid var(--vp-c-divider);
+  border: 1px solid #334155;
   border-radius: 10px;
   margin-bottom: 10px;
   transition: all 0.2s;
 }
 
 .permission-item:hover {
-  border-color: var(--vp-c-brand-1);
-  background: var(--vp-c-bg);
+  border-color: #667eea;
+  background: #0f172a;
 }
 
 .permission-icon {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: var(--vp-c-bg);
+  background: #0f172a;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -343,13 +352,13 @@ function generateRandomString(length) {
 
 .permission-text h4 {
   font-size: 14px;
-  color: var(--vp-c-text-1);
+  color: #f1f5f9;
   margin-bottom: 3px;
 }
 
 .permission-text p {
   font-size: 12px;
-  color: var(--vp-c-text-2);
+  color: #94a3b8;
 }
 
 .security-notice {
@@ -374,7 +383,7 @@ function generateRandomString(length) {
 .btn {
   flex: 1;
   padding: 14px 24px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -394,28 +403,26 @@ function generateRandomString(length) {
 }
 
 .btn-secondary {
-  background: var(--vp-c-bg);
-  color: var(--vp-c-text-1);
-  border: 1px solid var(--vp-c-divider);
+  background: #334155;
+  color: #f1f5f9;
 }
 
 .btn-secondary:hover {
-  background: var(--vp-c-bg-soft);
+  background: #475569;
 }
 
 .loading-state {
   text-align: center;
   padding: 40px;
-  background: var(--vp-c-bg-soft);
-  border-radius: 20px;
+  background: #1e293b;
+  border-radius: 12px;
   box-shadow: 0 25px 80px rgba(0,0,0,0.3);
-  transition: background 0.3s ease;
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #f3f3f3;
+  border: 3px solid #334155;
   border-top: 3px solid #667eea;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -432,7 +439,7 @@ function generateRandomString(length) {
   border: 1px solid #fecaca;
   color: #dc2626;
   padding: 15px;
-  border-radius: 10px;
+  border-radius: 8px;
   margin-bottom: 20px;
   text-align: center;
 }

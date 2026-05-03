@@ -1,5 +1,11 @@
 ---
 layout: false
+sidebar: false
+prev: false
+next: false
+title: ''
+editLink: false
+outline: false
 ---
 
 <script setup>
