@@ -451,11 +451,18 @@ function generateRandomString(length) {
 .btn-primary {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
 .btn-secondary {
