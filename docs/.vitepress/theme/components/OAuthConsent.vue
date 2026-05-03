@@ -104,8 +104,16 @@ const authCode = ref('')
 const currentUser = ref(null)
 const isDark = ref(false)
 
+// URL参数（在onMounted中初始化，避免SSR错误）
+const clientId = ref('')
+const redirectUri = ref('')
+const state = ref('')
+const codeChallenge = ref('')
+
 // 检测系统主题
 function checkTheme() {
+  if (typeof window === 'undefined') return
+  
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
   isDark.value = prefersDark
   
@@ -114,13 +122,6 @@ function checkTheme() {
     isDark.value = e.matches
   })
 }
-
-// URL参数
-const urlParams = new URLSearchParams(window.location.search)
-const clientId = urlParams.get('client_id')
-const redirectUri = urlParams.get('redirect_uri')
-const state = urlParams.get('state')
-const codeChallenge = urlParams.get('code_challenge')
 
 // 计算属性
 const userName = computed(() => {
@@ -139,12 +140,25 @@ const userInitial = computed(() => {
 })
 
 onMounted(async () => {
+  // SSR检查：确保在浏览器环境执行
+  if (typeof window === 'undefined') {
+    loading.value = false
+    return
+  }
+  
+  // 解析URL参数
+  const urlParams = new URLSearchParams(window.location.search)
+  clientId.value = urlParams.get('client_id') || ''
+  redirectUri.value = urlParams.get('redirect_uri') || ''
+  state.value = urlParams.get('state') || ''
+  codeChallenge.value = urlParams.get('code_challenge') || ''
+  
   // 检测主题
   checkTheme()
   
   try {
     // 验证必要参数
-    if (!clientId || !redirectUri || !state) {
+    if (!clientId.value || !redirectUri.value || !state.value) {
       error.value = '缺少必要的授权参数'
       loading.value = false
       return
@@ -194,9 +208,9 @@ async function approveAccess() {
     }
     
     // 检查必要参数
-    if (!clientId || !redirectUri || !state) {
+    if (!clientId.value || !redirectUri.value || !state.value) {
       error.value = '缺少必要的授权参数'
-      console.error('缺少参数:', { clientId, redirectUri, state })
+      console.error('缺少参数:', { clientId: clientId.value, redirectUri: redirectUri.value, state: state.value })
       return
     }
     
@@ -205,15 +219,18 @@ async function approveAccess() {
     console.log('生成的授权码:', authCode.value)
     
     // 存储授权码信息
-    const { error: insertError, data } = await supabase.from('oauth_codes').insert({
-      code: authCode.value,
-      user_id: currentUser.value.id,
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      code_challenge: codeChallenge,
-      state: state,
-      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString()
-    })
+    const { error: insertError, data } = await supabase
+      .from('oauth_codes')
+      .insert({
+        code: authCode.value,
+        user_id: currentUser.value.id,
+        client_id: clientId.value,
+        redirect_uri: redirectUri.value,
+        code_challenge: codeChallenge.value,
+        state: state.value,
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString()
+      })
+      .select()
     
     if (insertError) {
       console.error('插入授权码失败:', insertError)
