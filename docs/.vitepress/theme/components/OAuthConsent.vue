@@ -18,8 +18,23 @@
         <!-- 错误提示 -->
         <div v-if="error" class="error-message">{{ error }}</div>
         
+        <!-- 成功提示 - 显示授权码 -->
+        <div v-if="success" class="success-state">
+          <div class="success-icon">✅</div>
+          <h3>授权成功！</h3>
+          <p>请将以下授权码复制到游戏中：</p>
+          
+          <div class="auth-code-box">
+            <code>{{ authCode }}</code>
+            <button @click="copyCode" class="copy-btn">📋 复制</button>
+          </div>
+          
+          <p class="hint">授权码有效期：10分钟</p>
+          <p class="hint">复制后返回游戏，在登录界面粘贴授权码</p>
+        </div>
+        
         <!-- 用户信息 -->
-        <div class="user-info">
+        <div v-if="!success" class="user-info">
           <div class="user-avatar">{{ userInitial }}</div>
           <div class="user-details">
             <h3>{{ userName }}</h3>
@@ -28,7 +43,7 @@
         </div>
         
         <!-- 权限列表 -->
-        <div class="permissions">
+        <div v-if="!success" class="permissions">
           <h3>请求权限</h3>
           
           <div class="permission-item">
@@ -57,14 +72,14 @@
         </div>
         
         <!-- 安全提示 -->
-        <div class="security-notice">
+        <div v-if="!success" class="security-notice">
           <p>
             <strong>安全提示：</strong>婵之云不会获取您的密码。您随时可以取消授权。
           </p>
         </div>
         
         <!-- 操作按钮 -->
-        <div class="actions">
+        <div v-if="!success" class="actions">
           <button class="btn btn-secondary" @click="denyAccess">拒绝</button>
           <button class="btn btn-primary" @click="approveAccess">同意授权</button>
         </div>
@@ -84,6 +99,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 const loading = ref(true)
 const error = ref('')
+const success = ref(false)
+const authCode = ref('')
 const currentUser = ref(null)
 const isDark = ref(false)
 
@@ -169,12 +186,27 @@ onMounted(async () => {
 
 async function approveAccess() {
   try {
+    // 检查用户是否已登录
+    if (!currentUser.value) {
+      error.value = '用户未登录，请先在官网登录'
+      console.error('用户未登录:', currentUser.value)
+      return
+    }
+    
+    // 检查必要参数
+    if (!clientId || !redirectUri || !state) {
+      error.value = '缺少必要的授权参数'
+      console.error('缺少参数:', { clientId, redirectUri, state })
+      return
+    }
+    
     // 生成授权码
-    const authCode = generateRandomString(32)
+    authCode.value = generateRandomString(32)
+    console.log('生成的授权码:', authCode.value)
     
     // 存储授权码信息
     const { error: insertError, data } = await supabase.from('oauth_codes').insert({
-      code: authCode,
+      code: authCode.value,
       user_id: currentUser.value.id,
       client_id: clientId,
       redirect_uri: redirectUri,
@@ -189,12 +221,10 @@ async function approveAccess() {
       return
     }
     
-    // 重定向回游戏，携带授权码
-    const callbackUrl = new URL(redirectUri)
-    callbackUrl.searchParams.set('code', authCode)
-    callbackUrl.searchParams.set('state', state)
+    console.log('授权码已存储，准备显示')
     
-    window.location.href = callbackUrl.toString()
+    // 显示成功状态
+    success.value = true
     
   } catch (err) {
     console.error('授权错误:', err)
@@ -203,13 +233,22 @@ async function approveAccess() {
 }
 
 function denyAccess() {
-  // 用户拒绝，返回错误
-  const callbackUrl = new URL(redirectUri)
-  callbackUrl.searchParams.set('error', 'access_denied')
-  callbackUrl.searchParams.set('error_description', '用户拒绝了授权请求')
-  callbackUrl.searchParams.set('state', state)
-  
-  window.location.href = callbackUrl.toString()
+  // 用户拒绝
+  error.value = '授权已取消'
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(authCode.value).then(() => {
+    alert('授权码已复制到剪贴板！\n请返回游戏并粘贴授权码。')
+  }).catch(() => {
+    // 降级方案：选中文本
+    const codeElement = document.querySelector('.auth-code-box code')
+    const range = document.createRange()
+    range.selectNodeContents(codeElement)
+    window.getSelection().removeAllRanges()
+    window.getSelection().addRange(range)
+    alert('请手动复制选中的授权码！')
+  })
 }
 
 function generateRandomString(length) {
@@ -442,5 +481,67 @@ function generateRandomString(length) {
   border-radius: 8px;
   margin-bottom: 20px;
   text-align: center;
+}
+
+.success-state {
+  text-align: center;
+  padding: 20px;
+}
+
+.success-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+}
+
+.success-state h3 {
+  font-size: 20px;
+  color: #f1f5f9;
+  margin-bottom: 10px;
+}
+
+.success-state p {
+  font-size: 14px;
+  color: #94a3b8;
+  margin-bottom: 20px;
+}
+
+.auth-code-box {
+  background: #0f172a;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.auth-code-box code {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #667eea;
+  word-break: break-all;
+}
+
+.copy-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.copy-btn:hover {
+  background: #764ba2;
+}
+
+.hint {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 10px;
 }
 </style>
