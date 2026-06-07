@@ -19,7 +19,7 @@ features:
   - title: 🌸 婵之云
     details: 由QJOL Studios开发的二次元古风单机卡牌对战游戏，Demo 版本已发布，欢迎下载体验！
   - title: ✨ 敬请期待
-    details: QJOL Stuidios 将始终听取多方意见，努力成为一个更好的团队！交流群：664962321
+    details: QJOL Studios 将始终听取多方意见，努力成为一个更好的团队！交流群：664962321
 ---
 
 <script setup>
