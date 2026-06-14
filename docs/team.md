@@ -92,6 +92,18 @@
   </div>
 </div>
 
+<div class="team-member">
+  <img src="/images/芥沫.jpg" class="avatar" alt="芥沫">
+  <div class="info">
+    <div class="name">芥沫</div>
+    <div class="role">美术</div>
+    <a href="https://v.douyin.com/oMFQeCcyEnc/" target="_blank" class="github-link">
+      <img src="/images/StreamlineColorTiktokFlat.svg" width="16" height="16" alt="抖音" class="douyin-icon"/>
+      抖音
+    </a>
+  </div>
+</div>
+
 </div>
 
 <style>
