@@ -164,8 +164,30 @@ onMounted(async () => {
       return
     }
     
-    // 获取当前会话
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    // 获取当前会话（带超时和重试）
+    let session = null
+    let sessionError = null
+    
+    // 尝试获取会话，最多等待 3 秒
+    const maxWaitMs = 3000
+    const startTime = Date.now()
+    
+    while (Date.now() - startTime < maxWaitMs) {
+      const result = await supabase.auth.getSession()
+      session = result.data.session
+      sessionError = result.error
+      
+      if (session || sessionError) {
+        break
+      }
+      
+      // 会话为空且无错误，可能正在恢复中，尝试刷新
+      console.log('会话为空，尝试刷新...')
+      await supabase.auth.refreshSession()
+      
+      // 短暂等待后重试
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
     
     if (sessionError) {
       console.error('获取会话失败:', sessionError)
@@ -175,7 +197,7 @@ onMounted(async () => {
     }
     
     if (!session) {
-      // 未登录，重定向到登录页
+      // 最终仍无会话，重定向到登录页
       const currentUrl = encodeURIComponent(window.location.href)
       window.location.href = `/user?redirect=${currentUrl}`
       return

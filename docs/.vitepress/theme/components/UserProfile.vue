@@ -5,13 +5,13 @@
       <div class="spinner"></div>
       <p>正在加载用户信息...</p>
     </div>
-    
+
     <!-- 错误状态 -->
     <div v-else-if="error" class="error-state">
       <p>❌ {{ error }}</p>
       <button @click="loadUserData" class="retry-btn">重试</button>
     </div>
-    
+
     <!-- 已登录状态 -->
     <div v-else-if="user" class="user-profile">
       <!-- 基本信息卡片 -->
@@ -45,7 +45,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- 游戏数据统计 -->
       <div class="stats-grid">
         <div class="stat-card">
@@ -77,7 +77,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- 快速操作 -->
       <div class="quick-actions">
         <h3>快速操作</h3>
@@ -93,7 +93,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 未登录状态 -->
     <div v-else class="guest-state">
       <div class="guest-icon">👤</div>
@@ -127,11 +127,11 @@ let supabase = null
 // 初始化 Supabase
 async function initSupabase() {
   if (typeof window === 'undefined') return
-  
+
   const { createClient } = await import('@supabase/supabase-js')
   const SUPABASE_URL = 'https://ornvxqtykdmafokmwwnr.supabase.co'
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybnZ4cXR5a2RtYWZva213d25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NTAzNDAsImV4cCI6MjA5MTUyNjM0MH0.1zFgq_EC6JHmMTzRPDW11JKl7ltBzdjH2EMXvioJPqI'
-  
+
   supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 }
 
@@ -139,19 +139,19 @@ async function initSupabase() {
 async function loadUserData() {
   loading.value = true
   error.value = ''
-  
+
   try {
     await initSupabase()
     if (!supabase) return
-    
+
     // 获取当前会话
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    
+
     if (sessionError) throw sessionError
-    
+
     if (session) {
       user.value = session.user
-      
+
       // 初始化用户数据对象
       const combinedData = {
         uid: null,
@@ -160,7 +160,7 @@ async function loadUserData() {
         ur_count: 0,
         ssr_count: 0
       }
-      
+
       // 1. 从 users 表获取 UID、用户名、头像和最后下线时间
       const { data: userRecord, error: userError } = await supabase
         .from('users')
@@ -186,31 +186,42 @@ async function loadUserData() {
         .select('progress')
         .eq('user_id', session.user.id)
         .single()
-      
+
       if (gameError && gameError.code !== 'PGRST116') {
         console.warn('获取游戏数据失败:', gameError)
       }
-      
+
       if (gameData && gameData.progress) {
-        combinedData.play_time_seconds = gameData.progress.total_play_time || 0
+        // 优先使用 total_play_time，若不存在则从 sessions 累计
+        if (gameData.progress.total_play_time) {
+          combinedData.play_time_seconds = gameData.progress.total_play_time
+        } else if (gameData.progress.play_time_sessions) {
+          // 从会话列表计算总时长
+          const sessions = gameData.progress.play_time_sessions
+          let total = 0
+          for (const session of sessions) {
+            total += session.duration || 0
+          }
+          combinedData.play_time_seconds = total
+        }
       }
-      
+
       // 3. 从 gacha_history 表统计抽卡数据
       const { data: gachaRecords, error: gachaError } = await supabase
         .from('gacha_history')
         .select('rarity')
         .eq('user_id', session.user.id)
-      
+
       if (gachaError) {
         console.warn('获取抽卡记录失败:', gachaError)
       }
-      
+
       if (gachaRecords) {
         combinedData.total_pulls = gachaRecords.length
         combinedData.ur_count = gachaRecords.filter(r => r.rarity === 'UR').length
         combinedData.ssr_count = gachaRecords.filter(r => r.rarity === 'SSR').length
       }
-      
+
       userData.value = combinedData
     }
     else{
@@ -228,7 +239,7 @@ async function loadUserData() {
 // 格式化日期（统一转换为北京时间显示）
 function formatDate(dateString) {
   if (!dateString) return '未知'
-  
+
   // 统一当作 UTC 时间解析，然后转换为北京时间
   // 如果字符串以 Z 结尾或没有时区信息，都当作 UTC 处理
   let utcString = dateString
@@ -236,7 +247,7 @@ function formatDate(dateString) {
     // 没有时区信息，假设是 UTC 时间
     utcString = dateString + 'Z'
   }
-  
+
   const date = new Date(utcString)
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
@@ -254,12 +265,12 @@ function formatPlayTime(seconds) {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const secs = seconds % 60
-  
+
   let result = ''
   if (hours > 0) result += `${hours}小时`
   if (minutes > 0) result += `${minutes}分`
   if (secs > 0 || result === '') result += `${secs}秒`
-  
+
   return result
 }
 
@@ -272,7 +283,7 @@ function emitLogin() {
 onMounted(async () => {
   // 先初始化 Supabase
   await initSupabase()
-  
+
   // 尝试刷新会话，确保会话有效
   if (supabase) {
     const { error } = await supabase.auth.refreshSession()
@@ -282,7 +293,7 @@ onMounted(async () => {
       await supabase.auth.signOut()
     }
   }
-  
+
   loadUserData()
 })
 </script>
@@ -553,7 +564,7 @@ onMounted(async () => {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .user-meta {
     justify-content: center;
   }

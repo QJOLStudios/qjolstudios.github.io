@@ -6,7 +6,7 @@
         登录
       </button>
     </div>
-    
+
     <!-- 已登录状态 - 带下拉菜单 -->
     <div v-else class="user-dropdown" @mouseenter="showDropdown = true" @mouseleave="showDropdown = false">
       <div class="user-trigger" @click="showDropdown = !showDropdown">
@@ -16,7 +16,7 @@
         <span class="username">{{ displayName }}</span>
         <span class="dropdown-arrow" :class="{ 'is-open': showDropdown }">▼</span>
       </div>
-      
+
       <!-- 下拉菜单 -->
       <Transition name="dropdown">
         <div v-show="showDropdown" class="dropdown-menu">
@@ -30,9 +30,9 @@
               <div class="user-status">已登录</div>
             </div>
           </div>
-          
+
           <div class="dropdown-divider"></div>
-          
+
           <!-- 菜单项 -->
           <div class="dropdown-items">
             <a href="/user" class="dropdown-item">
@@ -40,9 +40,9 @@
               <span class="item-text">用户中心</span>
             </a>
           </div>
-          
+
           <div class="dropdown-divider"></div>
-          
+
           <!-- 设置和退出 -->
           <div class="dropdown-items">
             <div class="dropdown-item" @click="openSettingsModal('account')">
@@ -58,51 +58,51 @@
         </div>
       </Transition>
     </div>
-    
+
     <!-- 登录弹窗 -->
     <Teleport to="body">
       <div v-if="showLoginModal" class="modal-overlay" @click.self="showLoginModal = false">
         <div class="modal-content">
           <h3>登录 / 注册</h3>
-          
+
           <div class="form-group">
-            <input 
-              v-model="email" 
-              type="email" 
+            <input
+              v-model="email"
+              type="email"
               placeholder="邮箱地址"
               @keyup.enter="handleLogin"
             />
           </div>
-          
+
           <div class="form-group">
-            <input 
-              v-model="password" 
-              type="password" 
+            <input
+              v-model="password"
+              type="password"
               placeholder="密码"
               @keyup.enter="handleLogin"
             />
           </div>
-          
+
           <div v-if="error" class="error-message">{{ error }}</div>
           <div v-if="message" class="success-message">{{ message }}</div>
-          
+
           <div class="button-group">
-            <button 
-              class="primary-btn" 
+            <button
+              class="primary-btn"
               @click="handleLogin"
               :disabled="loading"
             >
               {{ loading ? '登录中...' : '登录' }}
             </button>
-            <button 
-              class="secondary-btn" 
+            <button
+              class="secondary-btn"
               @click="handleRegister"
               :disabled="loading"
             >
               {{ loading ? '注册中...' : '注册' }}
             </button>
           </div>
-          
+
           <button class="close-btn" @click="showLoginModal = false">×</button>
         </div>
       </div>
@@ -113,30 +113,30 @@
       <div v-if="showSettingsModal" class="modal-overlay" @click.self="closeSettingsModal">
         <div class="settings-modal-content">
           <button class="close-btn" @click="closeSettingsModal">×</button>
-          
+
           <div class="settings-layout">
             <!-- 侧边栏导航 -->
             <div class="settings-sidebar">
               <h3 class="settings-title">设置</h3>
               <nav class="settings-nav">
-                <div 
-                  class="nav-item" 
+                <div
+                  class="nav-item"
                   :class="{ active: settingsType === 'account' }"
                   @click="settingsType = 'account'"
                 >
                   <span class="nav-icon">👤</span>
                   <span class="nav-text">账号信息</span>
                 </div>
-                <div 
-                  class="nav-item" 
+                <div
+                  class="nav-item"
                   :class="{ active: settingsType === 'password' }"
                   @click="settingsType = 'password'"
                 >
                   <span class="nav-icon">🔒</span>
                   <span class="nav-text">修改密码</span>
                 </div>
-                <div 
-                  class="nav-item" 
+                <div
+                  class="nav-item"
                   :class="{ active: settingsType === 'privacy' }"
                   @click="settingsType = 'privacy'"
                 >
@@ -145,7 +145,7 @@
                 </div>
               </nav>
             </div>
-            
+
             <!-- 内容区域 -->
             <div class="settings-body">
               <!-- 账号信息 -->
@@ -161,37 +161,37 @@
                         <span>更换头像</span>
                       </div>
                     </div>
-                    <input 
-                      ref="fileInput" 
-                      type="file" 
-                      accept="image/png,image/jpeg,image/gif,image/webp" 
+                    <input
+                      ref="fileInput"
+                      type="file"
+                      accept="image/png,image/jpeg,image/gif,image/webp"
                       style="display: none"
                       @change="handleAvatarUpload"
                     />
                     <div v-if="avatarUploadStatus" class="avatar-status">{{ avatarUploadStatus }}</div>
                   </div>
-                  
+
 
                   <div class="form-group">
                     <label class="form-label">当前用户名</label>
-                    <input 
-                      v-model="newUsername" 
-                      type="text" 
+                    <input
+                      v-model="newUsername"
+                      type="text"
                       placeholder="请输入新用户名"
                       maxlength="20"
                     />
                   </div>
                   <div v-if="settingsError" class="error-message">{{ settingsError }}</div>
                   <div v-if="settingsMessage" class="success-message">{{ settingsMessage }}</div>
-                  <button 
-                    class="primary-btn" 
+                  <button
+                    class="primary-btn"
                     @click="updateUsername"
                     :disabled="settingsLoading"
                   >
                     {{ settingsLoading ? '保存中...' : '保存用户名' }}
                   </button>
                 </div>
-                
+
                 <div class="info-section">
                   <div class="info-item">
                     <span class="info-label">邮箱</span>
@@ -210,32 +210,32 @@
                 <div class="settings-section">
                   <div class="form-group">
                     <label class="form-label">当前密码</label>
-                    <input 
-                      v-model="currentPassword" 
-                      type="password" 
+                    <input
+                      v-model="currentPassword"
+                      type="password"
                       placeholder="请输入当前密码"
                     />
                   </div>
                   <div class="form-group">
                     <label class="form-label">新密码</label>
-                    <input 
-                      v-model="newPassword" 
-                      type="password" 
+                    <input
+                      v-model="newPassword"
+                      type="password"
                       placeholder="新密码（至少6位）"
                     />
                   </div>
                   <div class="form-group">
                     <label class="form-label">确认新密码</label>
-                    <input 
-                      v-model="confirmPassword" 
-                      type="password" 
+                    <input
+                      v-model="confirmPassword"
+                      type="password"
                       placeholder="请再次输入新密码"
                     />
                   </div>
                   <div v-if="settingsError" class="error-message">{{ settingsError }}</div>
                   <div v-if="settingsMessage" class="success-message">{{ settingsMessage }}</div>
-                  <button 
-                    class="primary-btn" 
+                  <button
+                    class="primary-btn"
                     @click="updatePassword"
                     :disabled="settingsLoading"
                   >
@@ -250,8 +250,8 @@
                 <div class="settings-section">
                   <div class="privacy-options">
                     <label class="privacy-item">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         v-model="privacySettings.showEmail"
                       />
                       <div class="privacy-info">
@@ -260,8 +260,8 @@
                       </div>
                     </label>
                     <label class="privacy-item">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         v-model="privacySettings.showStats"
                       />
                       <div class="privacy-info">
@@ -270,8 +270,8 @@
                       </div>
                     </label>
                     <label class="privacy-item">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         v-model="privacySettings.publicProfile"
                       />
                       <div class="privacy-info">
@@ -282,8 +282,8 @@
                   </div>
                   <div v-if="settingsError" class="error-message">{{ settingsError }}</div>
                   <div v-if="settingsMessage" class="success-message">{{ settingsMessage }}</div>
-                  <button 
-                    class="primary-btn" 
+                  <button
+                    class="primary-btn"
                     @click="savePrivacySettings"
                     :disabled="settingsLoading"
                   >
@@ -355,25 +355,25 @@ const displayName = computed(() => {
 // 初始化 Supabase 客户端
 async function initSupabase() {
   if (typeof window === 'undefined') return
-  
+
   const { createClient } = await import('@supabase/supabase-js')
   const SUPABASE_URL = 'https://ornvxqtykdmafokmwwnr.supabase.co'
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybnZ4cXR5a2RtYWZva213d25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NTAzNDAsImV4cCI6MjA5MTUyNjM0MH0.1zFgq_EC6JHmMTzRPDW11JKl7ltBzdjH2EMXvioJPqI'
-  
+
   supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 }
 
 // 检查登录状态
 onMounted(async () => {
   await initSupabase()
-  
+
   if (supabase) {
     // 获取当前会话
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
       user.value = session.user
     }
-    
+
     // 监听登录状态变化
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
@@ -383,10 +383,10 @@ onMounted(async () => {
       }
     })
   }
-  
+
   // 监听显示登录弹窗事件
   window.addEventListener('show-login-modal', handleShowLoginModal)
-  
+
   // 加载用户头像
   if (user.value) {
     await loadAvatar()
@@ -408,7 +408,7 @@ async function openSettingsModal(type) {
   settingsType.value = type
   showSettingsModal.value = true
   showDropdown.value = false
-  
+
   // 重置设置表单
   settingsError.value = ''
   settingsMessage.value = ''
@@ -416,7 +416,7 @@ async function openSettingsModal(type) {
   currentPassword.value = ''
   newPassword.value = ''
   confirmPassword.value = ''
-  
+
   // 如果是隐私设置，加载已有的设置
   if (type === 'privacy' && supabase && user.value) {
     await loadPrivacySettings()
@@ -426,7 +426,7 @@ async function openSettingsModal(type) {
 // 加载隐私设置
 async function loadPrivacySettings() {
   if (!supabase || !user.value) return
-  
+
   try {
     // 从 users 表读取隐私设置
     const { data, error } = await supabase
@@ -434,12 +434,12 @@ async function loadPrivacySettings() {
       .select('settings')
       .eq('id', user.value.id)
       .single()
-    
+
     if (error && error.code !== 'PGRST116') {
       console.log('加载隐私设置失败:', error)
       return
     }
-    
+
     // 从 settings 列中读取隐私设置
     const privacyData = data?.settings?.privacy
     if (privacyData) {
@@ -449,7 +449,7 @@ async function loadPrivacySettings() {
         publicProfile: privacyData.publicProfile ?? false
       }
     }
-    
+
     // 如果有 localStorage 的数据，迁移到数据库
     const storageKey = `privacy_settings_${user.value.id}`
     const stored = localStorage.getItem(storageKey)
@@ -481,32 +481,32 @@ function closeSettingsModal() {
 // 更新用户名（通过 Edge Function，含7天限制）
 async function updateUsername() {
   if (!supabase || !user.value) return
-  
+
   if (!newUsername.value.trim()) {
     settingsError.value = '请输入用户名'
     return
   }
-  
+
   settingsLoading.value = true
   settingsError.value = ''
   settingsMessage.value = ''
-  
+
   try {
     // 获取当前 session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     console.log('Session:', session, 'Error:', sessionError)
     console.log('User:', user.value)
-    
+
     if (sessionError) {
       throw new Error('获取会话失败: ' + sessionError.message)
     }
-    
+
     if (!session?.access_token) {
       throw new Error('未登录或会话已过期')
     }
-    
+
     console.log('Access Token:', session.access_token ? '存在' : '不存在')
-    
+
     // 调用 Edge Function，使用 Bearer token
     const response = await fetch('https://ornvxqtykdmafokmwwnr.supabase.co/functions/v1/update-username', {
       method: 'POST',
@@ -520,18 +520,18 @@ async function updateUsername() {
         new_username: newUsername.value.trim()
       })
     })
-    
+
     const result = await response.json()
     console.log('Edge Function 响应:', response.status, result)
-    
+
     if (!response.ok) {
       throw new Error(result.error || `修改失败 (${response.status})`)
     }
-    
+
     if (result.error) {
       throw new Error(result.error)
     }
-    
+
     settingsMessage.value = '用户名修改成功！'
     setTimeout(() => {
       closeSettingsModal()
@@ -547,46 +547,46 @@ async function updateUsername() {
 // 更新密码
 async function updatePassword() {
   if (!supabase) return
-  
+
   if (!currentPassword.value) {
     settingsError.value = '请输入当前密码'
     return
   }
-  
+
   if (!newPassword.value || newPassword.value.length < 6) {
     settingsError.value = '新密码至少需要6位'
     return
   }
-  
+
   if (newPassword.value !== confirmPassword.value) {
     settingsError.value = '两次输入的新密码不一致'
     return
   }
-  
+
   settingsLoading.value = true
   settingsError.value = ''
   settingsMessage.value = ''
-  
+
   try {
     // 先验证当前密码
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: user.value.email,
       password: currentPassword.value
     })
-    
+
     if (signInError) {
       settingsError.value = '当前密码错误'
       settingsLoading.value = false
       return
     }
-    
+
     // 更新密码
     const { error } = await supabase.auth.updateUser({
       password: newPassword.value
     })
-    
+
     if (error) throw error
-    
+
     settingsMessage.value = '密码修改成功！请使用新密码重新登录'
     setTimeout(() => {
       closeSettingsModal()
@@ -602,11 +602,11 @@ async function updatePassword() {
 // 保存隐私设置
 async function savePrivacySettings() {
   if (!supabase || !user.value) return
-  
+
   settingsLoading.value = true
   settingsError.value = ''
   settingsMessage.value = ''
-  
+
   try {
     // 先获取现有的 settings
     const { data: existingData, error: fetchError } = await supabase
@@ -614,13 +614,13 @@ async function savePrivacySettings() {
       .select('settings')
       .eq('id', user.value.id)
       .single()
-    
+
     // 合并现有设置和隐私设置
     const mergedSettings = {
       ...(existingData?.settings || {}),
       privacy: privacySettings.value
     }
-    
+
     // 保存到 users 表的 settings 列
     const { error } = await supabase
       .from('users')
@@ -628,13 +628,13 @@ async function savePrivacySettings() {
         settings: mergedSettings
       })
       .eq('id', user.value.id)
-    
+
     if (error) throw error
-    
+
     // 清除 localStorage 中的旧数据
     const storageKey = `privacy_settings_${user.value.id}`
     localStorage.removeItem(storageKey)
-    
+
     settingsMessage.value = '隐私设置已保存！'
     setTimeout(() => {
       closeSettingsModal()
@@ -656,34 +656,51 @@ async function handleLogin() {
     error.value = '客户端未初始化'
     return
   }
-  
+
   if (!email.value || !password.value) {
     error.value = '请输入邮箱和密码'
     return
   }
-  
+
   loading.value = true
   error.value = ''
   message.value = ''
-  
+
   const { data, error: authError } = await supabase.auth.signInWithPassword({
     email: email.value,
     password: password.value
   })
-  
+
   loading.value = false
-  
+
   if (authError) {
     error.value = authError.message
   } else {
     user.value = data.user
     message.value = '登录成功！'
-    setTimeout(() => {
-      showLoginModal.value = false
-      email.value = ''
-      password.value = ''
-      message.value = ''
-    }, 1000)
+    showLoginModal.value = false
+    email.value = ''
+    password.value = ''
+    message.value = ''
+
+    // 检查是否有 redirect 参数，若有则跳转回授权页完成 OAuth 流程
+    const urlParams = new URLSearchParams(window.location.search)
+    const redirect = urlParams.get('redirect')
+    if (redirect) {
+      // 防止开放重定向，仅允许跳转到本站域名
+      setTimeout(() => {
+        try {
+          const target = new URL(redirect, window.location.origin)
+          if (target.origin === window.location.origin) {
+            window.location.href = target.href
+          } else {
+            window.location.href = '/oauth/consent'
+          }
+        } catch (e) {
+          window.location.href = '/oauth/consent'
+        }
+      }, 500)
+    }
   }
 }
 
@@ -693,21 +710,21 @@ async function handleRegister() {
     error.value = '客户端未初始化'
     return
   }
-  
+
   if (!email.value || !password.value) {
     error.value = '请输入邮箱和密码'
     return
   }
-  
+
   if (password.value.length < 6) {
     error.value = '密码至少需要6位'
     return
   }
-  
+
   loading.value = true
   error.value = ''
   message.value = ''
-  
+
   const { data, error: authError } = await supabase.auth.signUp({
     email: email.value,
     password: password.value,
@@ -715,9 +732,9 @@ async function handleRegister() {
       emailRedirectTo: `${window.location.origin}/auth/callback`
     }
   })
-  
+
   loading.value = false
-  
+
   if (authError) {
     error.value = authError.message
   } else {
@@ -742,36 +759,36 @@ function triggerFileUpload() {
 function handleAvatarUpload(event) {
   const file = event.target.files[0]
   if (!file) return
-  
+
   // 验证文件类型
   const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
   if (!allowedTypes.includes(file.type)) {
     avatarUploadStatus.value = '只支持 PNG、JPG、GIF、WEBP 格式的图片'
     return
   }
-  
+
   // 验证文件大小（5MB）
   if (file.size > 5 * 1024 * 1024) {
     avatarUploadStatus.value = '图片大小不能超过 5MB'
     return
   }
-  
+
   // 直接上传头像
   avatarUploadStatus.value = '上传中...'
-  
+
   try {
     // 将图片转换为 base64
     const reader = new FileReader()
     reader.onload = async (e) => {
       const imageData = e.target.result
-      
+
       // 获取当前 session
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) {
         avatarUploadStatus.value = '请先登录'
         return
       }
-      
+
       // 调用 Edge Function
       const response = await fetch('https://ornvxqtykdmafokmwwnr.supabase.co/functions/v1/update-avatar', {
         method: 'POST',
@@ -785,29 +802,29 @@ function handleAvatarUpload(event) {
           file_name: file.name
         })
       })
-      
+
       const result = await response.json()
-      
+
       if (!response.ok || result.error) {
         throw new Error(result.error || '上传失败')
       }
-      
+
       // 更新头像 URL
       avatarUrl.value = result.avatar_url
       avatarUploadStatus.value = '头像上传成功！'
-      
+
       // 3秒后清除状态
       setTimeout(() => {
         avatarUploadStatus.value = ''
       }, 3000)
     }
-    
+
     reader.readAsDataURL(file)
   } catch (err) {
     console.error('头像上传错误:', err)
     avatarUploadStatus.value = err.message || '上传失败'
   }
-  
+
   // 清空文件输入，允许重复选择同一文件
   event.target.value = ''
 }
@@ -815,14 +832,14 @@ function handleAvatarUpload(event) {
 // 加载用户头像
 async function loadAvatar() {
   if (!supabase || !user.value) return
-  
+
   try {
     const { data } = await supabase
       .from('users')
       .select('avatar_url')
       .eq('id', user.value.id)
       .single()
-    
+
     if (data?.avatar_url) {
       avatarUrl.value = data.avatar_url
     }
@@ -834,7 +851,7 @@ async function loadAvatar() {
 // 退出登录
 async function logout() {
   if (!supabase) return
-  
+
   await supabase.auth.signOut()
   user.value = null
   showDropdown.value = false
@@ -1434,24 +1451,24 @@ async function logout() {
   .settings-layout {
     flex-direction: column;
   }
-  
+
   .settings-sidebar {
     width: 100%;
     border-right: none;
     border-bottom: 1px solid var(--vp-c-divider);
     padding: 16px;
   }
-  
+
   .settings-nav {
     flex-direction: row;
     overflow-x: auto;
     gap: 8px;
   }
-  
+
   .nav-item {
     white-space: nowrap;
   }
-  
+
   .settings-body {
     padding: 20px;
   }
