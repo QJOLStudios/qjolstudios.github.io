@@ -5,7 +5,7 @@
       <div class="spinner"></div>
       <p>正在加载授权信息...</p>
     </div>
-    
+
     <!-- 未登录-内联登录 -->
     <div v-else-if="showLoginForm" class="consent-container">
       <div class="header">
@@ -31,7 +31,7 @@
         <p class="login-hint">登录即表示同意婵之云使用您的数据</p>
       </div>
     </div>
-    
+
     <!-- 授权内容 -->
     <div v-else class="consent-container">
       <div class="header">
@@ -39,26 +39,26 @@
         <h1>婵之云游戏</h1>
         <p>QJOL Studios 开发</p>
       </div>
-      
+
       <div class="content">
         <!-- 错误提示 -->
         <div v-if="error" class="error-message">{{ error }}</div>
-        
+
         <!-- 成功提示 - 显示授权码 -->
         <div v-if="success" class="success-state">
           <div class="success-icon">✅</div>
           <h3>授权成功！</h3>
           <p>请将以下授权码复制到游戏中：</p>
-          
+
           <div class="auth-code-box">
             <code>{{ authCode }}</code>
             <button @click="copyCode" class="copy-btn">📋 复制</button>
           </div>
-          
+
           <p class="hint">授权码有效期：10分钟</p>
           <p class="hint">复制后返回游戏，在登录界面粘贴授权码</p>
         </div>
-        
+
         <!-- 用户信息 -->
         <div v-if="!success" class="user-info">
           <div class="user-avatar">{{ userInitial }}</div>
@@ -67,11 +67,11 @@
             <p>{{ userEmail }}</p>
           </div>
         </div>
-        
+
         <!-- 权限列表 -->
         <div v-if="!success" class="permissions">
           <h3>请求权限</h3>
-          
+
           <div class="permission-item">
             <div class="permission-icon">👤</div>
             <div class="permission-text">
@@ -79,7 +79,7 @@
               <p>读取您的用户ID、用户名和头像</p>
             </div>
           </div>
-          
+
           <div class="permission-item">
             <div class="permission-icon">☁️</div>
             <div class="permission-text">
@@ -87,7 +87,7 @@
               <p>保存和读取游戏进度、抽卡记录等数据</p>
             </div>
           </div>
-          
+
           <div class="permission-item">
             <div class="permission-icon">💰</div>
             <div class="permission-text">
@@ -96,14 +96,14 @@
             </div>
           </div>
         </div>
-        
+
         <!-- 安全提示 -->
         <div v-if="!success" class="security-notice">
           <p>
             <strong>安全提示：</strong>婵之云不会获取您的密码。您随时可以取消授权。
           </p>
         </div>
-        
+
         <!-- 操作按钮 -->
         <div v-if="!success" class="actions">
           <button class="btn btn-secondary" @click="denyAccess">拒绝</button>
@@ -146,10 +146,10 @@ const codeChallenge = ref('')
 // 检测系统主题
 function checkTheme() {
   if (typeof window === 'undefined') return
-  
+
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
   isDark.value = prefersDark
-  
+
   // 监听主题变化
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
     isDark.value = e.matches
@@ -178,69 +178,82 @@ onMounted(async () => {
     loading.value = false
     return
   }
-  
+
+  // 安全兜底：最多 5 秒后强制结束 loading 状态，防止灰屏
+  const safetyTimer = setTimeout(() => {
+    loading.value = false
+    if (!currentUser.value && !showLoginForm.value && !error.value && !success.value) {
+      showLoginForm.value = true
+    }
+  }, 5000)
+
   // 解析URL参数
   const urlParams = new URLSearchParams(window.location.search)
   clientId.value = urlParams.get('client_id') || ''
   redirectUri.value = urlParams.get('redirect_uri') || ''
   state.value = urlParams.get('state') || ''
   codeChallenge.value = urlParams.get('code_challenge') || ''
-  
+
   // 检测主题
   checkTheme()
-  
+
   try {
     // 验证必要参数
     if (!clientId.value || !redirectUri.value || !state.value) {
       error.value = '缺少必要的授权参数'
       loading.value = false
+      clearTimeout(safetyTimer)
       return
     }
-    
+
     // 获取当前会话（带重试）
     let session = null
     let sessionError = null
-    
+
     const maxWaitMs = 3000
     const startTime = Date.now()
-    
+
     while (Date.now() - startTime < maxWaitMs) {
       const result = await supabase.auth.getSession()
       session = result.data.session
       sessionError = result.error
-      
+
       if (session || sessionError) {
         break
       }
-      
+
       console.log('会话为空，尝试刷新...')
       await supabase.auth.refreshSession()
       await new Promise(resolve => setTimeout(resolve, 200))
     }
-    
+
     if (sessionError) {
       console.error('获取会话失败:', sessionError)
       error.value = '获取登录状态失败'
       loading.value = false
+      clearTimeout(safetyTimer)
       return
     }
-    
+
     if (!session) {
       // 无会话 → 显示内联登录表单，不跳转
       showLoginForm.value = true
       loading.value = false
+      clearTimeout(safetyTimer)
       return
     }
-    
+
     if (!session.user || !session.user.id) {
       error.value = '用户信息不完整，请重新登录'
       loading.value = false
+      clearTimeout(safetyTimer)
       return
     }
-    
+
     currentUser.value = session.user
     loading.value = false
-    
+    clearTimeout(safetyTimer)
+
     // 监听登录状态变化（登录成功后自动回到授权页）
     supabase.auth.onAuthStateChange((event, newSession) => {
       if (event === 'SIGNED_IN' && newSession) {
@@ -253,11 +266,12 @@ onMounted(async () => {
         loading.value = false
       }
     })
-    
+
   } catch (err) {
     console.error('初始化错误:', err)
     error.value = '加载失败，请刷新页面重试'
     loading.value = false
+    clearTimeout(safetyTimer)
   }
 })
 
@@ -267,21 +281,21 @@ async function handleLogin() {
     loginError.value = '请输入邮箱和密码'
     return
   }
-  
+
   loginLoading.value = true
   loginError.value = ''
-  
+
   const { data, error: authError } = await supabase.auth.signInWithPassword({
     email: loginEmail.value,
     password: loginPassword.value
   })
-  
+
   if (authError) {
     loginError.value = authError.message
     loginLoading.value = false
     return
   }
-  
+
   currentUser.value = data.user
   showLoginForm.value = false
   loginLoading.value = false
@@ -297,18 +311,18 @@ async function approveAccess() {
       console.error('用户未登录:', currentUser.value)
       return
     }
-    
+
     // 检查必要参数
     if (!clientId.value || !redirectUri.value || !state.value) {
       error.value = '缺少必要的授权参数'
       console.error('缺少参数:', { clientId: clientId.value, redirectUri: redirectUri.value, state: state.value })
       return
     }
-    
+
     // 生成授权码
     authCode.value = generateRandomString(32)
     console.log('生成的授权码:', authCode.value)
-    
+
     // 存储授权码信息
     const { error: insertError, data } = await supabase
       .from('oauth_codes')
@@ -322,18 +336,18 @@ async function approveAccess() {
         expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString()
       })
       .select()
-    
+
     if (insertError) {
       console.error('插入授权码失败:', insertError)
       error.value = `授权失败: ${insertError.message}`
       return
     }
-    
+
     console.log('授权码已存储，准备显示')
-    
+
     // 显示成功状态
     success.value = true
-    
+
   } catch (err) {
     console.error('授权错误:', err)
     error.value = `授权过程中发生错误: ${err.message}`
