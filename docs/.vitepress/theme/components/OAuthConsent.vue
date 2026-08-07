@@ -6,6 +6,32 @@
       <p>正在加载授权信息...</p>
     </div>
     
+    <!-- 未登录-内联登录 -->
+    <div v-else-if="showLoginForm" class="consent-container">
+      <div class="header">
+        <div class="app-icon">🎮</div>
+        <h1>婵之云游戏</h1>
+        <p>QJOL Studios 开发</p>
+      </div>
+      <div class="content">
+        <div class="login-prompt">
+          <h3>请先登录</h3>
+          <p>登录后即可授权游戏访问您的数据</p>
+        </div>
+        <div v-if="loginError" class="error-message">{{ loginError }}</div>
+        <div class="form-group">
+          <input v-model="loginEmail" type="email" placeholder="邮箱地址" @keyup.enter="handleLogin" />
+        </div>
+        <div class="form-group">
+          <input v-model="loginPassword" type="password" placeholder="密码" @keyup.enter="handleLogin" />
+        </div>
+        <button class="btn btn-primary login-submit-btn" @click="handleLogin" :disabled="loginLoading">
+          {{ loginLoading ? '登录中...' : '登录' }}
+        </button>
+        <p class="login-hint">登录即表示同意婵之云使用您的数据</p>
+      </div>
+    </div>
+    
     <!-- 授权内容 -->
     <div v-else class="consent-container">
       <div class="header">
@@ -104,6 +130,13 @@ const authCode = ref('')
 const currentUser = ref(null)
 const isDark = ref(false)
 
+// 内联登录状态
+const showLoginForm = ref(false)
+const loginEmail = ref('')
+const loginPassword = ref('')
+const loginError = ref('')
+const loginLoading = ref(false)
+
 // URL参数（在onMounted中初始化，避免SSR错误）
 const clientId = ref('')
 const redirectUri = ref('')
@@ -164,11 +197,10 @@ onMounted(async () => {
       return
     }
     
-    // 获取当前会话（带超时和重试）
+    // 获取当前会话（带重试）
     let session = null
     let sessionError = null
     
-    // 尝试获取会话，最多等待 3 秒
     const maxWaitMs = 3000
     const startTime = Date.now()
     
@@ -181,11 +213,8 @@ onMounted(async () => {
         break
       }
       
-      // 会话为空且无错误，可能正在恢复中，尝试刷新
       console.log('会话为空，尝试刷新...')
       await supabase.auth.refreshSession()
-      
-      // 短暂等待后重试
       await new Promise(resolve => setTimeout(resolve, 200))
     }
     
@@ -197,13 +226,12 @@ onMounted(async () => {
     }
     
     if (!session) {
-      // 最终仍无会话，重定向到登录页
-      const currentUrl = encodeURIComponent(window.location.href)
-      window.location.href = `/user?redirect=${currentUrl}`
+      // 无会话 → 显示内联登录表单，不跳转
+      showLoginForm.value = true
+      loading.value = false
       return
     }
     
-    // 检查用户数据是否完整
     if (!session.user || !session.user.id) {
       error.value = '用户信息不完整，请重新登录'
       loading.value = false
@@ -213,12 +241,53 @@ onMounted(async () => {
     currentUser.value = session.user
     loading.value = false
     
+    // 监听登录状态变化（登录成功后自动回到授权页）
+    supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === 'SIGNED_IN' && newSession) {
+        currentUser.value = newSession.user
+        showLoginForm.value = false
+        loading.value = false
+      } else if (event === 'SIGNED_OUT') {
+        currentUser.value = null
+        showLoginForm.value = true
+        loading.value = false
+      }
+    })
+    
   } catch (err) {
     console.error('初始化错误:', err)
     error.value = '加载失败，请刷新页面重试'
     loading.value = false
   }
 })
+
+// 内联登录
+async function handleLogin() {
+  if (!loginEmail.value || !loginPassword.value) {
+    loginError.value = '请输入邮箱和密码'
+    return
+  }
+  
+  loginLoading.value = true
+  loginError.value = ''
+  
+  const { data, error: authError } = await supabase.auth.signInWithPassword({
+    email: loginEmail.value,
+    password: loginPassword.value
+  })
+  
+  if (authError) {
+    loginError.value = authError.message
+    loginLoading.value = false
+    return
+  }
+  
+  currentUser.value = data.user
+  showLoginForm.value = false
+  loginLoading.value = false
+  loginEmail.value = ''
+  loginPassword.value = ''
+}
 
 async function approveAccess() {
   try {
@@ -589,5 +658,64 @@ function generateRandomString(length) {
   font-size: 12px;
   color: #64748b;
   margin-top: 10px;
+}
+
+/* 内联登录表单 */
+.login-prompt {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-prompt h3 {
+  font-size: 20px;
+  color: #f1f5f9;
+  margin-bottom: 8px;
+}
+
+.login-prompt p {
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  font-size: 15px;
+  background: #0f172a;
+  color: #f1f5f9;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  border-color: #667eea;
+}
+
+.form-group input::placeholder {
+  color: #64748b;
+}
+
+.login-submit-btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-hint {
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 16px;
 }
 </style>
