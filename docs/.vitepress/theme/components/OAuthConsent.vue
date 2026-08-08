@@ -110,12 +110,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = 'https://ornvxqtykdmafokmwwnr.supabase.co'
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybnZ4cXR5a2RtYWZva213d25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NTAzNDAsImV4cCI6MjA5MTUyNjM0MH0.1zFgq_EC6JHmMTzRPDW11JKl7ltBzdjH2EMXvioJPqI'
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+let supabase = null
 
 const error = ref('')
 const success = ref(false)
@@ -169,8 +168,11 @@ onMounted(async () => {
   // 登录表单默认已显示（showLoginForm = true），无需等待
   // 异步检查会话，如果已登录则切换到授权面板
 
-  // SSR检查
+  // 仅在浏览器环境初始化 Supabase（避免 SSR 水合失败）
   if (typeof window === 'undefined') return
+
+  const { createClient } = await import('@supabase/supabase-js')
+  supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
   // 解析URL参数
   const urlParams = new URLSearchParams(window.location.search)
@@ -247,6 +249,11 @@ onMounted(async () => {
 
 // 内联登录
 async function handleLogin() {
+  if (!supabase) {
+    loginError.value = '客户端正在初始化，请稍后再试'
+    return
+  }
+
   if (!loginEmail.value || !loginPassword.value) {
     loginError.value = '请输入邮箱和密码'
     return
@@ -275,6 +282,11 @@ async function handleLogin() {
 
 async function approveAccess() {
   try {
+    if (!supabase) {
+      error.value = '客户端未初始化'
+      return
+    }
+
     // 检查用户是否已登录
     if (!currentUser.value) {
       error.value = '用户未登录，请先在官网登录'

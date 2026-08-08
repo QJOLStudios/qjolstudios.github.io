@@ -12,4 +12,4 @@ outline: false
 import OAuthConsent from '../.vitepress/theme/components/OAuthConsent.vue'
 </script>
 
-<OAuthConsent />
+<ClientOnly><OAuthConsent /></ClientOnly>
