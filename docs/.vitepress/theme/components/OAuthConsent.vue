@@ -262,22 +262,28 @@ async function handleLogin() {
   loginLoading.value = true
   loginError.value = ''
 
-  const { data, error: authError } = await supabase.auth.signInWithPassword({
-    email: loginEmail.value,
-    password: loginPassword.value
-  })
+  try {
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email: loginEmail.value,
+      password: loginPassword.value
+    })
 
-  if (authError) {
-    loginError.value = authError.message
+    if (authError) {
+      loginError.value = authError.message
+      loginLoading.value = false
+      return
+    }
+
+    currentUser.value = data.user
+    showLoginForm.value = false
     loginLoading.value = false
-    return
+    loginEmail.value = ''
+    loginPassword.value = ''
+  } catch (err) {
+    console.error('登录网络错误:', err)
+    loginError.value = '网络请求失败，请检查网络连接后重试'
+    loginLoading.value = false
   }
-
-  currentUser.value = data.user
-  showLoginForm.value = false
-  loginLoading.value = false
-  loginEmail.value = ''
-  loginPassword.value = ''
 }
 
 async function approveAccess() {
