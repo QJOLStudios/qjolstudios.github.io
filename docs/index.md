@@ -138,6 +138,22 @@ import { VPHomeContent } from 'vitepress/theme'
 
 </div>
 
+<div class="home-ifdian-section">
+
+## 支持我们
+
+<p class="ifdian-desc">我们已正式入驻爱发电，如果你喜欢我们的作品，欢迎来支持我们！每一份支持都是我们前进的动力。</p>
+
+<div class="ifdian-card">
+  <a href="https://ifdian.net/a/QJOL-Studios" target="_blank" class="ifdian-link">
+    <span class="ifdian-badge">爱发电</span>
+    <span class="ifdian-title">QJOL Studios 爱发电主页</span>
+    <span class="ifdian-arrow">→</span>
+  </a>
+</div>
+
+</div>
+
 <style>
 .home-team-section {
   padding: 64px 24px;
@@ -244,5 +260,86 @@ import { VPHomeContent } from 'vitepress/theme'
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+}
+
+/* ============================================
+   爱发电支持区域
+   ============================================ */
+.home-ifdian-section {
+  padding: 32px 24px 64px;
+  max-width: 1152px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.home-ifdian-section h2 {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--vp-c-brand-1);
+  margin-bottom: 8px;
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.ifdian-desc {
+  text-align: center;
+  color: var(--vp-c-text-2);
+  margin-bottom: 32px;
+  font-size: 15px;
+}
+
+.ifdian-card {
+  display: inline-block;
+  background: rgba(128, 128, 128, 0.05);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.ifdian-card:hover {
+  background: rgba(128, 128, 128, 0.1);
+  border-color: var(--vp-c-brand-1);
+  transform: translateY(-4px);
+}
+
+.ifdian-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 36px;
+  text-decoration: none;
+  color: var(--vp-c-text-1);
+  font-size: 16px;
+}
+
+.ifdian-link:hover {
+  text-decoration: none;
+}
+
+.ifdian-badge {
+  display: inline-block;
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--vp-c-divider);
+}
+
+.ifdian-title {
+  font-weight: 500;
+}
+
+.ifdian-arrow {
+  font-size: 18px;
+  color: var(--vp-c-brand-1);
+  transition: transform 0.2s ease;
+}
+
+.ifdian-card:hover .ifdian-arrow {
+  transform: translateX(4px);
 }
 </style>
