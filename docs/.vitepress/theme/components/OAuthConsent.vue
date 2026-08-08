@@ -171,20 +171,29 @@ onMounted(async () => {
   // 仅在浏览器环境初始化 Supabase（避免 SSR 水合失败）
   if (typeof window === 'undefined') return
 
-  const { createClient } = await import('@supabase/supabase-js')
-  supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
-
-  // 解析URL参数
-  const urlParams = new URLSearchParams(window.location.search)
-  clientId.value = urlParams.get('client_id') || ''
-  redirectUri.value = urlParams.get('redirect_uri') || ''
-  state.value = urlParams.get('state') || ''
-  codeChallenge.value = urlParams.get('code_challenge') || ''
-
-  // 检测主题
-  checkTheme()
-
   try {
+    // 动态加载 Supabase（如果失败不影响登录表单显示）
+    let createClient
+    try {
+      const mod = await import('@supabase/supabase-js')
+      createClient = mod.createClient
+      supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+    } catch (importErr) {
+      console.error('加载 Supabase SDK 失败:', importErr)
+      loginError.value = '登录服务加载失败，请刷新页面重试'
+      return
+    }
+
+    // 解析URL参数
+    const urlParams = new URLSearchParams(window.location.search)
+    clientId.value = urlParams.get('client_id') || ''
+    redirectUri.value = urlParams.get('redirect_uri') || ''
+    state.value = urlParams.get('state') || ''
+    codeChallenge.value = urlParams.get('code_challenge') || ''
+
+    // 检测主题
+    checkTheme()
+
     // 验证必要参数
     if (!clientId.value || !redirectUri.value || !state.value) {
       error.value = '缺少必要的授权参数'
