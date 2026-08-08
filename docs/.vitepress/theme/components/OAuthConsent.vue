@@ -1,13 +1,7 @@
 <template>
   <div class="oauth-consent-page" :class="{ 'dark-theme': isDark }">
-    <!-- 加载状态 -->
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-      <p>正在加载授权信息...</p>
-    </div>
-
-    <!-- 未登录-内联登录 -->
-    <div v-else-if="showLoginForm" class="consent-container">
+    <!-- 未登录-内联登录（默认显示，不依赖加载状态） -->
+    <div v-if="showLoginForm" class="consent-container">
       <div class="header">
         <div class="app-icon">🎮</div>
         <h1>婵之云游戏</h1>
@@ -32,7 +26,7 @@
       </div>
     </div>
 
-    <!-- 授权内容 -->
+    <!-- 已登录-授权内容 -->
     <div v-else class="consent-container">
       <div class="header">
         <div class="app-icon">🎮</div>
@@ -123,15 +117,14 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-const loading = ref(true)
 const error = ref('')
 const success = ref(false)
 const authCode = ref('')
 const currentUser = ref(null)
 const isDark = ref(false)
 
-// 内联登录状态
-const showLoginForm = ref(false)
+// 内联登录状态（默认显示登录表单，不依赖异步加载）
+const showLoginForm = ref(true)
 const loginEmail = ref('')
 const loginPassword = ref('')
 const loginError = ref('')
@@ -173,19 +166,11 @@ const userInitial = computed(() => {
 })
 
 onMounted(async () => {
-  // SSR检查：确保在浏览器环境执行
-  if (typeof window === 'undefined') {
-    loading.value = false
-    return
-  }
+  // 登录表单默认已显示（showLoginForm = true），无需等待
+  // 异步检查会话，如果已登录则切换到授权面板
 
-  // 安全兜底：最多 5 秒后强制结束 loading 状态，防止灰屏
-  const safetyTimer = setTimeout(() => {
-    loading.value = false
-    if (!currentUser.value && !showLoginForm.value && !error.value && !success.value) {
-      showLoginForm.value = true
-    }
-  }, 5000)
+  // SSR检查
+  if (typeof window === 'undefined') return
 
   // 解析URL参数
   const urlParams = new URLSearchParams(window.location.search)
@@ -201,15 +186,12 @@ onMounted(async () => {
     // 验证必要参数
     if (!clientId.value || !redirectUri.value || !state.value) {
       error.value = '缺少必要的授权参数'
-      loading.value = false
-      clearTimeout(safetyTimer)
       return
     }
 
-    // 获取当前会话（带重试）
+    // 获取当前会话（带重试，最多等 3 秒）
     let session = null
     let sessionError = null
-
     const maxWaitMs = 3000
     const startTime = Date.now()
 
@@ -218,9 +200,7 @@ onMounted(async () => {
       session = result.data.session
       sessionError = result.error
 
-      if (session || sessionError) {
-        break
-      }
+      if (session || sessionError) break
 
       console.log('会话为空，尝试刷新...')
       await supabase.auth.refreshSession()
@@ -230,48 +210,38 @@ onMounted(async () => {
     if (sessionError) {
       console.error('获取会话失败:', sessionError)
       error.value = '获取登录状态失败'
-      loading.value = false
-      clearTimeout(safetyTimer)
       return
     }
 
     if (!session) {
-      // 无会话 → 显示内联登录表单，不跳转
+      // 无会话 → 保持显示登录表单
       showLoginForm.value = true
-      loading.value = false
-      clearTimeout(safetyTimer)
       return
     }
 
     if (!session.user || !session.user.id) {
       error.value = '用户信息不完整，请重新登录'
-      loading.value = false
-      clearTimeout(safetyTimer)
       return
     }
 
+    // 已登录，切换到授权面板
     currentUser.value = session.user
-    loading.value = false
-    clearTimeout(safetyTimer)
+    showLoginForm.value = false
 
-    // 监听登录状态变化（登录成功后自动回到授权页）
+    // 监听登录状态变化
     supabase.auth.onAuthStateChange((event, newSession) => {
       if (event === 'SIGNED_IN' && newSession) {
         currentUser.value = newSession.user
         showLoginForm.value = false
-        loading.value = false
       } else if (event === 'SIGNED_OUT') {
         currentUser.value = null
         showLoginForm.value = true
-        loading.value = false
       }
     })
 
   } catch (err) {
     console.error('初始化错误:', err)
     error.value = '加载失败，请刷新页面重试'
-    loading.value = false
-    clearTimeout(safetyTimer)
   }
 })
 
