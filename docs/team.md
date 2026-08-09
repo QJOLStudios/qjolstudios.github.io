@@ -81,9 +81,9 @@
 </div>
 
 <div class="team-member">
-  <img src="/images/Rational.jpg" class="avatar" alt="Rational.☁">
+  <img src="/images/颂鸽.jpg" class="avatar" alt="颂鸽">
   <div class="info">
-    <div class="name">Rational.☁</div>
+    <div class="name">颂鸽</div>
     <div class="role">美术</div>
     <a href="https://www.douyin.com/user/MS4wLjABAAAABczU7BzbJ3ArnWRtNYfO4XvJ2fuzC4KTNShxJ09lrwJBjZxyKaf67FEuMqriPuHh?from_tab_name=main" target="_blank" class="github-link">
       <img src="/images/StreamlineColorTiktokFlat.svg" width="16" height="16" alt="抖音" class="douyin-icon"/>
