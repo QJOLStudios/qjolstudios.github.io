@@ -32,14 +32,19 @@
 
 由QJOL Studios开发的二次元古风单机卡牌对战游戏
 
-### 最新版本 v0.1.7-demo
+### 最新版本 v0.1.8-demo
 
-- <a href="/downloads/0.1.7-demo/Windows/婵之云_安装程序_v0.1.7-demo.exe" download>Windows 安装程序</a>
-- <a href="/downloads/0.1.7-demo/婵之云.apk" download>Android APK</a>
+- <a href="/downloads/0.1.8-demo/Windows/婵之云_安装程序_v0.1.8-demo.exe" download>Windows 安装程序</a>
+- <a href="/downloads/0.1.8-demo/婵之云.apk" download>Android APK</a>
 
 <details>
 <summary>点击展开历史版本</summary>
  
+### v0.1.7-demo
+
+- <a href="/downloads/0.1.7-demo/Windows/婵之云_安装程序_v0.1.7-demo.exe" download>Windows 安装程序</a>
+- <a href="/downloads/0.1.7-demo/婵之云.apk" download>Android APK</a>
+
 ### v0.1.6-demo
 
 - <a href="/downloads/0.1.6-demo/Windows/婵之云_安装程序_v0.1.6-demo.exe" download>Windows 安装程序</a>
